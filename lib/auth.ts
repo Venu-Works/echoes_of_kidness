@@ -47,6 +47,14 @@ export const authOptions: AuthOptions = {
       if (token.sub && session.user) {
         (session.user as { id?: string }).id = token.sub;
       }
+      if (session.user) {
+        const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+          .split(",")
+          .map((e) => e.trim())
+          .filter(Boolean);
+        (session.user as { isAdmin?: boolean }).isAdmin =
+          !!token.email && adminEmails.includes(token.email);
+      }
       return session;
     },
   },

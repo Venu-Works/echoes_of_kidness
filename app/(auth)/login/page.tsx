@@ -77,10 +77,10 @@ function LoginForm() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="text-2xl font-bold text-rose-600">
-            Poppylat Stories 🌸
+            Heart Witness
           </Link>
           <p className="text-gray-500 text-sm mt-1">
-            Stories about love, respect, and gratitude
+            Some moments deserve to be remembered
           </p>
         </div>
 

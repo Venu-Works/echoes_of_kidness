@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "worker": "tsx -r dotenv/config lib/queue/worker.ts dotenv_config_path=.env.local"
+    "worker": "tsx -r dotenv/config lib/queue/worker.ts dotenv_config_path=.env.local",
+    "backfill-images": "tsx scripts/backfill-images.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -15,6 +16,7 @@
     "autoprefixer": "^10.4.21",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.56.0",
+    "cloudinary": "^2.11.0",
     "dotenv": "^16.4.7",
     "ioredis": "^5.6.1",
     "mongoose": "^8.14.0",

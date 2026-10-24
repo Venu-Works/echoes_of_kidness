@@ -1,7 +1,8 @@
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = "Poppylat Stories <noreply@poppylat.com>";
+// Display name is the brand; the address stays on the domain verified in Resend
+const FROM = "Heart Witness <noreply@poppylat.com>";
 const BASE_URL = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
 export async function sendApprovalEmail(
@@ -17,14 +18,14 @@ export async function sendApprovalEmail(
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #e11d48;">Great news! 🌸</h2>
-          <p>Your story <strong>"${storyTitle}"</strong> has been approved and is now live on Poppylat Stories.</p>
+          <p>Your story <strong>"${storyTitle}"</strong> has been approved and is now live on Heart Witness.</p>
           <p>Thank you for sharing your heart with our community.</p>
           <a href="${BASE_URL}/stories/${storyId}"
              style="display:inline-block;background:#e11d48;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;margin-top:16px;">
             Read your story →
           </a>
           <p style="margin-top:24px;color:#6b7280;font-size:14px;">
-            With gratitude, the Poppylat Stories team
+            With gratitude, the Heart Witness team
           </p>
         </div>
       `,
@@ -43,7 +44,7 @@ export async function sendRejectionEmail(
     await resend.emails.send({
       from: FROM,
       to,
-      subject: `Update on your Poppylat Stories submission`,
+      subject: `Update on your Heart Witness submission`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #374151;">Thank you for sharing your story</h2>
@@ -55,7 +56,7 @@ export async function sendRejectionEmail(
             Submit another story →
           </a>
           <p style="margin-top:24px;color:#6b7280;font-size:14px;">
-            With gratitude, the Poppylat Stories team
+            With gratitude, the Heart Witness team
           </p>
         </div>
       `,

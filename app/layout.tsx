@@ -8,13 +8,13 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "Poppylat Stories",
-    template: "%s | Poppylat Stories",
+    default: "Heart Witness — Some moments deserve to be remembered",
+    template: "%s | Heart Witness",
   },
   description:
-    "Real, heartfelt stories about love, respect, and gratitude — readable in 2 minutes.",
+    "A home for real stories of kindness, gratitude, love, and respect — shared by the people who experienced them.",
   openGraph: {
-    siteName: "Poppylat Stories",
+    siteName: "Heart Witness",
     type: "website",
   },
 };

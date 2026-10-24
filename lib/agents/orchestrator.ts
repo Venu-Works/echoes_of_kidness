@@ -19,14 +19,15 @@ export function runOrchestrator(
     relevance.reason === "agent_error" ||
     quality.reason === "agent_error";
 
-  if (!safety.safe) {
+  if (hasAgentError) {
+    // If any agent errored, send to human review rather than auto-rejecting
+    // (checked first because a failed safety agent reports safe: false)
+    status = "human_review";
+    reason = "Automated moderation could not complete — needs human review";
+  } else if (!safety.safe) {
     // Hard rejection — safety violations always reject immediately
     status = "rejected";
     reason = `Content policy violation: ${safety.flags.join(", ")}`;
-  } else if (hasAgentError) {
-    // If any agent errored, send to human review rather than auto-rejecting
-    status = "human_review";
-    reason = "Automated moderation could not complete — needs human review";
   } else if (!quality.quality_pass) {
     status = "rejected";
     reason = `Quality check failed: ${quality.reason}`;
@@ -34,7 +35,7 @@ export function runOrchestrator(
     // Low confidence → hard reject; borderline → human review
     if (relevance.theme_confidence < 0.3) {
       status = "rejected";
-      reason = `Story does not appear to be about love, respect, or gratitude: ${relevance.reason}`;
+      reason = `Story does not appear to be about kindness, gratitude, love, or respect: ${relevance.reason}`;
     } else {
       status = "human_review";
       reason = `Theme relevance uncertain (confidence: ${relevance.theme_confidence.toFixed(2)}): ${relevance.reason}`;

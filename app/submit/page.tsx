@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Share a Story",
-  description: "Share your heartfelt story about love, respect, or gratitude.",
+  description: "Share your heartfelt story about kindness, gratitude, love, or respect.",
 };
 
 export default async function SubmitPage() {
@@ -17,7 +17,7 @@ export default async function SubmitPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Share Your Story</h1>
         <p className="text-gray-600">
-          Write a heartfelt story about love, respect, or gratitude — under 500 words.
+          Write a heartfelt story about kindness, gratitude, love, or respect — under 500 words.
           All stories are reviewed before publishing.
         </p>
       </div>

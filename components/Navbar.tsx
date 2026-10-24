@@ -5,12 +5,13 @@ import { useSession, signOut } from "next-auth/react";
 
 export function Navbar() {
   const { data: session, status } = useSession();
+  const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin;
 
   return (
     <nav className="border-b bg-white sticky top-0 z-10">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold text-rose-600 tracking-tight">
-          Poppylat Stories
+          Heart Witness
         </Link>
 
         <div className="flex items-center gap-5 text-sm font-medium">
@@ -29,6 +30,11 @@ export function Navbar() {
               <Link href="/profile" className="text-gray-600 hover:text-rose-600 transition-colors">
                 My Stories
               </Link>
+              {isAdmin && (
+                <Link href="/admin" className="text-gray-600 hover:text-rose-600 transition-colors">
+                  Review Queue
+                </Link>
+              )}
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="text-gray-500 hover:text-gray-800 transition-colors"

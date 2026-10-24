@@ -10,6 +10,7 @@ const THEMES = [
   { value: "love", label: "❤️ Love" },
   { value: "respect", label: "🤝 Respect" },
   { value: "gratitude", label: "🙏 Gratitude" },
+  { value: "kindness", label: "🌱 Kindness" },
 ];
 
 function countWords(text: string): number {

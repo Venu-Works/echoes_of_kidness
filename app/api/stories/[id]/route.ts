@@ -30,7 +30,7 @@ export async function GET(
 const EditStorySchema = z.object({
   title: z.string().min(3).max(200),
   body: z.string().min(50),
-  theme: z.array(z.enum(["love", "respect", "gratitude"])).min(1).max(3),
+  theme: z.array(z.enum(["love", "respect", "gratitude", "kindness"])).min(1).max(4),
   display_name: z.string().min(1).max(100),
   post_as_anonymous: z.boolean().optional(),
 });

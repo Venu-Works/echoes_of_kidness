@@ -5,13 +5,16 @@ import { z } from "zod";
 const RelevanceResultSchema = z.object({
   relevant: z.boolean(),
   theme_confidence: z.number().min(0).max(1),
-  detected_themes: z.array(z.enum(["love", "respect", "gratitude"])),
+  detected_themes: z.array(z.enum(["love", "respect", "gratitude", "kindness"])),
   reason: z.string(),
 });
 
-const SYSTEM_PROMPT = `You are a theme relevance evaluator for Poppylat Stories, a micro-storytelling platform for stories about love, respect, and gratitude.
+const SYSTEM_PROMPT = `You are a theme relevance evaluator for Heart Witness, a micro-storytelling platform for stories about kindness, gratitude, love, and respect.
 
-## The Three Themes
+## The Four Themes
+
+**Kindness**: Acts of generosity, compassion or care — given or received — especially from strangers, neighbours or unexpected people. Small everyday kindnesses count as much as big gestures.
+
 
 **Love**: Romantic love, familial love, friendship, self-love, love for a community or nature — any profound bond characterized by deep care and affection.
 
@@ -20,9 +23,9 @@ const SYSTEM_PROMPT = `You are a theme relevance evaluator for Poppylat Stories,
 **Gratitude**: Thankfulness for people, experiences, lessons, second chances, small moments, or difficult times that led to growth. Gratitude found through hardship is valid and powerful.
 
 ## Relevant Stories
-- Directly about one of the three themes, even if those exact words aren't used
+- Directly about one of the four themes, even if those exact words aren't used
 - Stories where the theme is the emotional core, even if told indirectly
-- Stories that start with conflict or pain but arrive at a moment of love, respect, or gratitude
+- Stories that start with conflict or pain but arrive at a moment of kindness, gratitude, love, or respect
 - Stories from any cultural or social context, as long as the theme is present
 
 ## NOT Relevant
@@ -30,8 +33,8 @@ const SYSTEM_PROMPT = `You are a theme relevance evaluator for Poppylat Stories,
 - News articles, listicles, or informational content
 - Promotional content for products or services
 - Rants with no narrative arc or emotional theme
-- Generic creative fiction unrelated to the three themes
-- Off-topic personal anecdotes with no connection to love/respect/gratitude
+- Generic creative fiction unrelated to the four themes
+- Off-topic personal anecdotes with no connection to kindness/gratitude/love/respect
 
 ## Confidence Scoring
 - 0.9–1.0: Unmistakably on-theme
@@ -46,7 +49,7 @@ Respond ONLY with a valid JSON object — no markdown, no explanation:
 {
   "relevant": boolean,
   "theme_confidence": number from 0.0 to 1.0,
-  "detected_themes": ["love", "respect", "gratitude"] (only themes clearly present),
+  "detected_themes": ["kindness", "gratitude", "love", "respect"] (only themes clearly present),
   "reason": "One sentence explaining your assessment"
 }`;
 

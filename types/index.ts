@@ -1,5 +1,5 @@
 export type StoryStatus = "pending" | "approved" | "rejected" | "human_review";
-export type ThemeTag = "love" | "respect" | "gratitude";
+export type ThemeTag = "love" | "respect" | "gratitude" | "kindness";
 export type AuthProvider = "google" | "facebook" | "twitter" | "credentials" | "anonymous";
 
 export interface SafetyResult {
@@ -41,6 +41,8 @@ export interface IStory {
   status: StoryStatus;
   submitted_at: Date;
   published_at: Date | null;
+  image_url: string | null;
+  image_status: "none" | "pending" | "ready" | "failed";
 }
 
 export interface IUser {

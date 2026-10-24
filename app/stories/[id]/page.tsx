@@ -4,7 +4,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { connectDB } from "@/lib/mongodb";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { Story, IStoryDoc } from "@/models/Story";
+import { StoryImage } from "@/components/StoryImage";
+import { RegenerateImageButton } from "./RegenerateImageButton";
 import type { FlattenMaps, Types } from "mongoose";
 
 type LeanStory = FlattenMaps<IStoryDoc> & { _id: Types.ObjectId };
@@ -13,12 +17,14 @@ const THEME_STYLES: Record<string, string> = {
   love: "bg-rose-100 text-rose-700",
   respect: "bg-blue-100 text-blue-700",
   gratitude: "bg-amber-100 text-amber-700",
+  kindness: "bg-emerald-100 text-emerald-700",
 };
 
 const THEME_LABELS: Record<string, string> = {
   love: "❤️ Love",
   respect: "🤝 Respect",
   gratitude: "🙏 Gratitude",
+  kindness: "🌱 Kindness",
 };
 
 async function getStory(id: string): Promise<LeanStory | null> {
@@ -49,6 +55,7 @@ export async function generateMetadata({
       title: story.title,
       description: `A story about ${story.theme.join(" & ")} by ${story.display_name}`,
       type: "article",
+      ...(story.image_url ? { images: [story.image_url] } : {}),
     },
   };
 }
@@ -61,6 +68,9 @@ export default async function StoryPage({
   const { id } = await params;
   const story = await getStory(id);
   if (!story) notFound();
+
+  const session = await getServerSession(authOptions);
+  const isAdmin = !!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin;
 
   const readMinutes = Math.max(1, Math.ceil(story.word_count / 200));
   const publishedDate = story.published_at
@@ -80,6 +90,17 @@ export default async function StoryPage({
       >
         ← Back to stories
       </Link>
+
+      {/* Illustration */}
+      <StoryImage
+        imageUrl={story.image_url}
+        theme={story.theme}
+        alt={story.title}
+        width={1280}
+        height={720}
+        priority
+        className="rounded-2xl mb-8"
+      />
 
       {/* Theme badges */}
       <div className="flex flex-wrap gap-2 mb-5">
@@ -112,6 +133,13 @@ export default async function StoryPage({
           </>
         )}
       </div>
+
+      {isAdmin && (
+        <RegenerateImageButton
+          storyId={String(story._id)}
+          imageStatus={story.image_status ?? "none"}
+        />
+      )}
 
       {/* Story body */}
       <div className="story-body">

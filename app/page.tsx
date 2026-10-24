@@ -22,15 +22,22 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-rose-50 via-white to-amber-50 py-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="text-5xl mb-4">🌸</div>
+          <p className="text-sm font-semibold tracking-widest uppercase text-rose-600 mb-4">
+            Heart Witness
+          </p>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
-            Stories that touch the heart
+            Some moments deserve to be remembered
           </h1>
-          <p className="text-lg text-gray-600 mb-8 max-w-xl mx-auto">
-            Real stories about <span className="text-rose-600 font-semibold">love</span>,{" "}
-            <span className="text-blue-600 font-semibold">respect</span>, and{" "}
-            <span className="text-amber-600 font-semibold">gratitude</span> — under 500 words,
-            readable in 2 minutes.
+          <p className="text-lg text-gray-600 mb-3 max-w-xl mx-auto">
+            A home for real stories of{" "}
+            <span className="text-emerald-600 font-semibold">kindness</span>,{" "}
+            <span className="text-amber-600 font-semibold">gratitude</span>,{" "}
+            <span className="text-rose-600 font-semibold">love</span>, and{" "}
+            <span className="text-blue-600 font-semibold">respect</span> — shared by the
+            people who experienced them.
+          </p>
+          <p className="text-sm text-gray-500 mb-8">
+            Under 500 words · readable in 2 minutes
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
@@ -77,6 +84,7 @@ export default async function HomePage() {
                     theme: story.theme as string[],
                     word_count: story.word_count as number,
                     published_at: story.published_at as Date | null,
+                    image_url: story.image_url as string | null,
                   }}
                 />
               );

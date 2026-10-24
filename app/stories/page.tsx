@@ -11,7 +11,7 @@ async function getStories(theme?: string, page = 1) {
   await connectDB();
   const limit = 12;
   const query: Record<string, unknown> = { status: "approved" };
-  if (theme && ["love", "respect", "gratitude"].includes(theme)) {
+  if (theme && ["love", "respect", "gratitude", "kindness"].includes(theme)) {
     query.theme = theme;
   }
 
@@ -78,6 +78,7 @@ export default async function StoriesPage({
                     theme: story.theme as string[],
                     word_count: story.word_count as number,
                     published_at: story.published_at as Date | null,
+                    image_url: story.image_url as string | null,
                   }}
                 />
               );

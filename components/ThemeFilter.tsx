@@ -7,6 +7,7 @@ const THEMES = [
   { value: "love", label: "❤️ Love" },
   { value: "respect", label: "🤝 Respect" },
   { value: "gratitude", label: "🙏 Gratitude" },
+  { value: "kindness", label: "🌱 Kindness" },
 ];
 
 export function ThemeFilter() {

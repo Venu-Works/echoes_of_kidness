@@ -10,9 +10,9 @@ const SubmitStorySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(200),
   body: z.string().min(50, "Story must be at least 50 words"),
   theme: z
-    .array(z.enum(["love", "respect", "gratitude"]))
+    .array(z.enum(["love", "respect", "gratitude", "kindness"]))
     .min(1, "Select at least one theme")
-    .max(3),
+    .max(4),
   display_name: z.string().min(1).max(100),
   post_as_anonymous: z.boolean().optional(),
 });
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   const limit = 12;
 
   const query: Record<string, unknown> = { status: "approved" };
-  if (theme && ["love", "respect", "gratitude"].includes(theme)) {
+  if (theme && ["love", "respect", "gratitude", "kindness"].includes(theme)) {
     query.theme = theme;
   }
 

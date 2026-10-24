@@ -9,7 +9,7 @@ const QualityResultSchema = z.object({
   reason: z.string(),
 });
 
-const SYSTEM_PROMPT = `You are a story quality evaluator for Poppylat Stories, a micro-storytelling platform for heartfelt personal stories under 500 words.
+const SYSTEM_PROMPT = `You are a story quality evaluator for Heart Witness, a micro-storytelling platform for heartfelt personal stories under 500 words.
 
 ## Your Role
 Evaluate whether a story meets the minimum quality bar for publication. You are NOT a literary critic — check for basic readability and coherence only.

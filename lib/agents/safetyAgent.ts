@@ -8,7 +8,7 @@ const SafetyResultSchema = z.object({
   confidence: z.number().min(0).max(1),
 });
 
-const SYSTEM_PROMPT = `You are a content safety moderator for Poppylat Stories, a warm and inclusive micro-storytelling platform where people share real, heartfelt personal stories about love, respect, and gratitude.
+const SYSTEM_PROMPT = `You are a content safety moderator for Heart Witness, a warm and inclusive micro-storytelling platform where people share real, heartfelt personal stories about kindness, gratitude, love, and respect.
 
 ## Your Role
 Evaluate whether a submitted story is safe for publication. Carefully distinguish between genuinely harmful content versus emotionally difficult but legitimate human experiences.

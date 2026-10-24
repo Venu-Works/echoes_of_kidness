@@ -4,6 +4,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Story } from "@/models/Story";
+import { enqueueIllustration } from "@/lib/queue/queue";
 
 function getAdminEmails(): string[] {
   return (process.env.ADMIN_EMAILS ?? "")
@@ -41,7 +42,7 @@ export async function PATCH(
 
   const update: Record<string, unknown> =
     parsed.data.action === "approve"
-      ? { status: "approved", published_at: new Date() }
+      ? { status: "approved", published_at: new Date(), image_status: "pending" }
       : { status: "rejected" };
 
   const story = await Story.findByIdAndUpdate(id, update, {
@@ -50,6 +51,16 @@ export async function PATCH(
 
   if (!story) {
     return NextResponse.json({ error: "Story not found" }, { status: 404 });
+  }
+
+  if (parsed.data.action === "approve") {
+    try {
+      await enqueueIllustration(id);
+    } catch (err) {
+      // Approval still stands; the image can be regenerated later
+      console.error("[Admin API] Failed to queue illustration:", err);
+      await Story.findByIdAndUpdate(id, { image_status: "failed" });
+    }
   }
 
   return NextResponse.json({ success: true, status: story.status });

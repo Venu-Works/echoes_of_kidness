@@ -37,3 +37,34 @@ export function getModerationQueue(): Queue<ModerationJobData> {
   }
   return _queue;
 }
+
+export interface IllustrationJobData {
+  storyId: string;
+}
+
+let _illustrationQueue: Queue<IllustrationJobData> | null = null;
+
+export function getIllustrationQueue(): Queue<IllustrationJobData> {
+  if (!_illustrationQueue) {
+    _illustrationQueue = new Queue<IllustrationJobData>("illustration", {
+      connection: createRedisConnection(),
+      defaultJobOptions: {
+        attempts: 2,
+        backoff: { type: "exponential", delay: 10000 },
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    });
+  }
+  return _illustrationQueue;
+}
+
+// Queues an illustration for a story. The jobId stops the same story being
+// queued twice while a job for it is still waiting or running.
+export async function enqueueIllustration(storyId: string): Promise<void> {
+  await getIllustrationQueue().add(
+    "illustrate-story",
+    { storyId },
+    { jobId: `illustrate-${storyId}` }
+  );
+}
