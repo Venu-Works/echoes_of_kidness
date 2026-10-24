@@ -36,8 +36,8 @@ export default async function ProfilePage({
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-1">My Stories</h1>
-        <p className="text-gray-500">
+        <h1 className="text-3xl font-bold text-ink mb-1">My Stories</h1>
+        <p className="text-muted">
           Welcome back, {session.user?.name} 👋
         </p>
       </div>
@@ -55,11 +55,11 @@ export default async function ProfilePage({
       )}
 
       {stories.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-          <p className="text-gray-500 mb-4">You haven&apos;t shared any stories yet.</p>
+        <div className="text-center py-16 bg-white rounded-xl border border-sand">
+          <p className="text-muted mb-4">You haven&apos;t shared any stories yet.</p>
           <Link
             href="/submit"
-            className="bg-rose-600 text-white px-6 py-2.5 rounded-full font-medium hover:bg-rose-700 transition-colors"
+            className="bg-terracotta-600 text-white px-6 py-2.5 rounded-full font-medium hover:bg-terracotta-700 transition-colors"
           >
             Share your first story 🌸
           </Link>
@@ -73,7 +73,7 @@ export default async function ProfilePage({
             return (
               <div
                 key={String(story._id)}
-                className="bg-white rounded-xl border border-gray-200 p-5"
+                className="bg-white rounded-xl border border-sand p-5"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -87,21 +87,21 @@ export default async function ProfilePage({
                     {isPublished ? (
                       <Link
                         href={`/stories/${String(story._id)}`}
-                        className="font-semibold text-gray-900 hover:text-rose-600 transition-colors"
+                        className="font-semibold text-ink hover:text-terracotta-600 transition-colors"
                       >
                         {story.title}
                       </Link>
                     ) : story.status === "rejected" ? (
                       <Link
                         href={`/edit/${String(story._id)}`}
-                        className="font-semibold text-gray-900 hover:text-rose-600 transition-colors"
+                        className="font-semibold text-ink hover:text-terracotta-600 transition-colors"
                       >
                         {story.title}
                       </Link>
                     ) : (
-                      <p className="font-semibold text-gray-900">{story.title}</p>
+                      <p className="font-semibold text-ink">{story.title}</p>
                     )}
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-muted mt-1">
                       {story.word_count} words ·{" "}
                       Submitted{" "}
                       {new Date(story.submitted_at).toLocaleDateString("en-US", {
@@ -113,7 +113,7 @@ export default async function ProfilePage({
                     {story.status === "rejected" && (
                       <Link
                         href={`/edit/${String(story._id)}`}
-                        className="inline-block mt-3 text-sm font-medium text-rose-600 border border-rose-300 px-3 py-1 rounded-full hover:bg-rose-50 transition-colors"
+                        className="inline-block mt-3 text-sm font-medium text-terracotta-600 border border-terracotta-300 px-3 py-1 rounded-full hover:bg-terracotta-50 transition-colors"
                       >
                         ✏️ Edit &amp; Resubmit
                       </Link>

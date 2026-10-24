@@ -15,8 +15,8 @@ export default async function SubmitPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Share Your Story</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-ink mb-2">Share Your Story</h1>
+        <p className="text-muted">
           Write a heartfelt story about kindness, gratitude, love, or respect — under 500 words.
           All stories are reviewed before publishing.
         </p>
@@ -32,7 +32,7 @@ export default async function SubmitPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8">
+      <div className="bg-white rounded-xl border border-sand p-6 md:p-8">
         <SubmitForm userName={session?.user?.name} />
       </div>
     </div>

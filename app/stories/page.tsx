@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import { connectDB } from "@/lib/mongodb";
 import { Story } from "@/models/Story";
-import { StoryCard } from "@/components/StoryCard";
+import { StoryCard, reactionTotal } from "@/components/StoryCard";
 import { ThemeFilter } from "@/components/ThemeFilter";
 import Link from "next/link";
 
@@ -44,10 +44,10 @@ export default async function StoriesPage({
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-ink mb-2">
           {themeLabel} Stories
         </h1>
-        <p className="text-gray-500 mb-5">
+        <p className="text-muted mb-5">
           {total} {total === 1 ? "story" : "stories"} published
         </p>
 
@@ -57,9 +57,9 @@ export default async function StoriesPage({
       </div>
 
       {stories.length === 0 ? (
-        <div className="text-center py-20 text-gray-500">
+        <div className="text-center py-20 text-muted">
           <p className="text-lg mb-2">No stories yet in this category.</p>
-          <Link href="/submit" className="text-rose-600 font-medium hover:underline">
+          <Link href="/submit" className="text-terracotta-600 font-medium hover:underline">
             Be the first to share one 🌸
           </Link>
         </div>
@@ -79,6 +79,8 @@ export default async function StoriesPage({
                     word_count: story.word_count as number,
                     published_at: story.published_at as Date | null,
                     image_url: story.image_url as string | null,
+                    read_count: story.read_count as number | undefined,
+                    reaction_total: reactionTotal(story.reactions),
                   }}
                 />
               );
@@ -94,8 +96,8 @@ export default async function StoriesPage({
                   href={`/stories?${theme ? `theme=${theme}&` : ""}page=${p}`}
                   className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                     p === page
-                      ? "bg-rose-600 text-white"
-                      : "bg-white border border-gray-300 text-gray-700 hover:border-rose-300"
+                      ? "bg-terracotta-600 text-white"
+                      : "bg-white border border-sand text-ink hover:border-terracotta-300"
                   }`}
                 >
                   {p}

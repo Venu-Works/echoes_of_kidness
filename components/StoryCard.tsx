@@ -10,6 +10,8 @@ interface StoryCardProps {
     word_count: number;
     published_at?: string | Date | null;
     image_url?: string | null;
+    read_count?: number;
+    reaction_total?: number;
   };
 }
 
@@ -27,13 +29,19 @@ const THEME_LABELS: Record<string, string> = {
   kindness: "🌱 Kindness",
 };
 
+// Sum of all reaction counts on a story (fields may be missing on older stories)
+export function reactionTotal(reactions?: Record<string, number> | null): number {
+  if (!reactions) return 0;
+  return Object.values(reactions).reduce((sum, n) => sum + (n ?? 0), 0);
+}
+
 export function StoryCard({ story }: StoryCardProps) {
   const readMinutes = Math.max(1, Math.ceil(story.word_count / 200));
 
   return (
     <Link
       href={`/stories/${story._id}`}
-      className="group block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md hover:border-rose-200 transition-all"
+      className="story-card group block bg-white border border-sand rounded-2xl overflow-hidden hover:shadow-md hover:border-terracotta-200 transition-all"
     >
       <StoryImage
         imageUrl={story.image_url}
@@ -49,22 +57,36 @@ export function StoryCard({ story }: StoryCardProps) {
           {story.theme.map((t) => (
             <span
               key={t}
-              className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${THEME_STYLES[t] ?? "bg-gray-100 text-gray-600"}`}
+              className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${THEME_STYLES[t] ?? "bg-sand-light text-muted"}`}
             >
               {THEME_LABELS[t] ?? t}
             </span>
           ))}
         </div>
 
-        <h3 className="font-semibold text-gray-900 text-base leading-snug mb-2 group-hover:text-rose-600 transition-colors">
+        <h3 className="font-semibold text-ink text-base leading-snug mb-2 group-hover:text-terracotta-600 transition-colors">
           {story.title}
         </h3>
 
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted">
           By {story.display_name}
           <span className="mx-1.5">·</span>
           <span>⏱ {readMinutes} min read</span>
         </p>
+
+        {(!!story.read_count || !!story.reaction_total) && (
+          <p className="text-xs text-muted-light mt-2">
+            {!!story.read_count && (
+              <span>👁 {story.read_count.toLocaleString()} {story.read_count === 1 ? "read" : "reads"}</span>
+            )}
+            {!!story.read_count && !!story.reaction_total && <span className="mx-1.5">·</span>}
+            {!!story.reaction_total && (
+              <span>
+                🙏🤝❤️👏 {story.reaction_total.toLocaleString()}
+              </span>
+            )}
+          </p>
+        )}
       </div>
     </Link>
   );

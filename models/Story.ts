@@ -12,6 +12,13 @@ export interface IStoryDoc extends Document {
   published_at: Date | null;
   image_url: string | null;
   image_status: "none" | "pending" | "ready" | "failed";
+  read_count: number;
+  reactions: {
+    gratitude: number;
+    respect: number;
+    love: number;
+    applause: number;
+  };
 }
 
 const StorySchema = new Schema<IStoryDoc>({
@@ -33,6 +40,14 @@ const StorySchema = new Schema<IStoryDoc>({
     type: String,
     enum: ["none", "pending", "ready", "failed"],
     default: "none",
+  },
+  // Denormalised counters, kept in step with the Reaction collection
+  read_count: { type: Number, default: 0 },
+  reactions: {
+    gratitude: { type: Number, default: 0 },
+    respect: { type: Number, default: 0 },
+    love: { type: Number, default: 0 },
+    applause: { type: Number, default: 0 },
   },
 });
 

@@ -92,13 +92,13 @@ export function EditForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+        <label className="block text-sm font-semibold text-ink mb-1.5">
           Story Title
         </label>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+          className="w-full border border-sand rounded-lg px-4 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
           required
           maxLength={200}
         />
@@ -107,7 +107,7 @@ export function EditForm({
       {/* Story body */}
       <div>
         <div className="flex justify-between items-center mb-1.5">
-          <label className="text-sm font-semibold text-gray-700">Your Story</label>
+          <label className="text-sm font-semibold text-ink">Your Story</label>
           <span
             className={`text-sm font-medium tabular-nums ${
               overLimit
@@ -116,7 +116,7 @@ export function EditForm({
                 ? "text-amber-600"
                 : wordCount >= 450
                 ? "text-orange-500"
-                : "text-gray-500"
+                : "text-muted"
             }`}
           >
             {wordCount} / {MAX_WORDS} words
@@ -126,8 +126,8 @@ export function EditForm({
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={12}
-          className={`w-full border rounded-lg px-4 py-3 text-gray-900 leading-relaxed focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent resize-none ${
-            overLimit ? "border-red-400 bg-red-50" : "border-gray-300"
+          className={`w-full border rounded-lg px-4 py-3 text-ink leading-relaxed focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent resize-none ${
+            overLimit ? "border-red-400 bg-red-50" : "border-sand"
           }`}
           required
         />
@@ -141,8 +141,8 @@ export function EditForm({
 
       {/* Themes */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Themes <span className="text-gray-400 font-normal">(select at least one)</span>
+        <label className="block text-sm font-semibold text-ink mb-2">
+          Themes <span className="text-muted-light font-normal">(select at least one)</span>
         </label>
         <div className="flex gap-3">
           {THEMES.map(({ value, label }) => (
@@ -152,8 +152,8 @@ export function EditForm({
               onClick={() => toggleTheme(value)}
               className={`px-5 py-2 rounded-full border font-medium text-sm transition-colors ${
                 themes.includes(value)
-                  ? "bg-rose-600 text-white border-rose-600"
-                  : "bg-white text-gray-600 border-gray-300 hover:border-rose-300"
+                  ? "bg-terracotta-600 text-white border-terracotta-600"
+                  : "bg-white text-muted border-sand hover:border-terracotta-300"
               }`}
             >
               {label}
@@ -164,22 +164,22 @@ export function EditForm({
 
       {/* Post as */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Post as</label>
+        <label className="block text-sm font-semibold text-ink mb-2">Post as</label>
         <label className="flex items-center gap-2 mb-3 cursor-pointer">
           <input
             type="checkbox"
             checked={anonymous}
             onChange={(e) => setAnonymous(e.target.checked)}
-            className="w-4 h-4 text-rose-600"
+            className="w-4 h-4 text-terracotta-600"
           />
-          <span className="text-sm text-gray-700">Post anonymously</span>
+          <span className="text-sm text-ink">Post anonymously</span>
         </label>
         {!anonymous && (
           <input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Your display name"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            className="w-full border border-sand rounded-lg px-4 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
             required={!anonymous}
             maxLength={100}
           />
@@ -195,7 +195,7 @@ export function EditForm({
       <button
         type="submit"
         disabled={submitting || overLimit || themes.length === 0 || wordCount < MIN_WORDS}
-        className="w-full bg-rose-600 text-white py-3 rounded-lg font-semibold hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full bg-terracotta-600 text-white py-3 rounded-lg font-semibold hover:bg-terracotta-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {submitting ? "Resubmitting..." : "Resubmit for Review 🌸"}
       </button>

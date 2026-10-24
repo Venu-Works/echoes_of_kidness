@@ -72,26 +72,26 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 to-amber-50 flex items-center justify-center px-4 py-12">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 w-full max-w-md p-8">
+    <div className="min-h-screen bg-gradient-to-br from-terracotta-50 to-sand-light flex items-center justify-center px-4 py-12">
+      <div className="bg-white rounded-2xl shadow-sm border border-sand w-full max-w-md p-8">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="text-2xl font-bold text-rose-600">
+          <Link href="/" className="text-2xl font-bold text-terracotta-600">
             Heart Witness
           </Link>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-muted text-sm mt-1">
             Some moments deserve to be remembered
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
+        <div className="flex bg-sand-light rounded-lg p-1 mb-6">
           <button
             onClick={() => { setTab("signin"); setError(""); }}
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
               tab === "signin"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-ink shadow-sm"
+                : "text-muted hover:text-ink"
             }`}
           >
             Sign In
@@ -100,8 +100,8 @@ function LoginForm() {
             onClick={() => { setTab("register"); setError(""); }}
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
               tab === "register"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
+                ? "bg-white text-ink shadow-sm"
+                : "text-muted hover:text-ink"
             }`}
           >
             Create Account
@@ -111,27 +111,27 @@ function LoginForm() {
         {tab === "signin" ? (
           <form onSubmit={handleSignIn} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-ink mb-1">
                 Email
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className="w-full border border-sand rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
                 placeholder="you@example.com"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-ink mb-1">
                 Password
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className="w-full border border-sand rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
                 placeholder="••••••••"
                 required
               />
@@ -146,7 +146,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-rose-600 text-white py-3 rounded-lg font-semibold hover:bg-rose-700 disabled:opacity-50 transition-colors"
+              className="w-full bg-terracotta-600 text-white py-3 rounded-lg font-semibold hover:bg-terracotta-700 disabled:opacity-50 transition-colors"
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
@@ -154,41 +154,41 @@ function LoginForm() {
         ) : (
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-ink mb-1">
                 Your Name
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className="w-full border border-sand rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
                 placeholder="Priya S."
                 required
                 minLength={2}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-ink mb-1">
                 Email
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className="w-full border border-sand rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
                 placeholder="you@example.com"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-ink mb-1">
                 Password
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className="w-full border border-sand rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
                 placeholder="Minimum 8 characters"
                 required
                 minLength={8}
@@ -204,16 +204,16 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-rose-600 text-white py-3 rounded-lg font-semibold hover:bg-rose-700 disabled:opacity-50 transition-colors"
+              className="w-full bg-terracotta-600 text-white py-3 rounded-lg font-semibold hover:bg-terracotta-700 disabled:opacity-50 transition-colors"
             >
               {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
         )}
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        <p className="text-center text-xs text-muted-light mt-6">
           You can also{" "}
-          <Link href="/submit" className="text-rose-600 hover:underline">
+          <Link href="/submit" className="text-terracotta-600 hover:underline">
             submit a story anonymously
           </Link>{" "}
           without an account.

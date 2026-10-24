@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { connectDB } from "@/lib/mongodb";
 import { Story } from "@/models/Story";
-import { StoryCard } from "@/components/StoryCard";
+import { StoryCard, reactionTotal } from "@/components/StoryCard";
 
 async function getFeaturedStories() {
   await connectDB();
@@ -19,56 +19,40 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-rose-50 via-white to-amber-50 py-20 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <p className="text-sm font-semibold tracking-widest uppercase text-rose-600 mb-4">
-            Heart Witness
-          </p>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
-            Some moments deserve to be remembered
-          </h1>
-          <p className="text-lg text-gray-600 mb-3 max-w-xl mx-auto">
-            A home for real stories of{" "}
-            <span className="text-emerald-600 font-semibold">kindness</span>,{" "}
-            <span className="text-amber-600 font-semibold">gratitude</span>,{" "}
-            <span className="text-rose-600 font-semibold">love</span>, and{" "}
-            <span className="text-blue-600 font-semibold">respect</span> — shared by the
-            people who experienced them.
-          </p>
-          <p className="text-sm text-gray-500 mb-8">
-            Under 500 words · readable in 2 minutes
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/submit"
-              className="bg-rose-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-rose-700 transition-colors"
-            >
-              Share Your Story
-            </Link>
-            <Link
-              href="/stories"
-              className="bg-white text-gray-800 px-8 py-3 rounded-full font-semibold border border-gray-300 hover:border-gray-400 transition-colors"
-            >
-              Browse Stories
-            </Link>
+      <section className="home-hero">
+        <div className="hero-copy">
+          <p className="eyebrow"><span /> A little space for the good in life</p>
+          <h1>Some moments<br />deserve to be<br /><em>remembered.</em></h1>
+          <p className="hero-description">Real people. Small acts. Lasting impact. A home for stories of love, respect, gratitude, and the kindness that connects us.</p>
+          <div className="flex flex-wrap gap-3 mt-8">
+            <Link href="/stories" className="primary-link">Find a little inspiration <span aria-hidden="true">↗</span></Link>
+            <Link href="/submit" className="secondary-link">Share your story <span aria-hidden="true">→</span></Link>
           </div>
+          <p className="hero-note">A moment to read. A feeling to carry with you.</p>
+        </div>
+        <div className="hero-art" aria-hidden="true">
+          <div className="art-orbit orbit-one" /><div className="art-orbit orbit-two" />
+          <span className="art-spark spark-one">✳</span><span className="art-spark spark-two">✧</span>
+          <div className="keepsake keepsake-back"><span>THE EVERYDAY MAGIC OF</span><strong>being there.</strong><div className="art-flower">✳</div></div>
+          <div className="keepsake keepsake-front"><span>A NOTE TO REMEMBER</span><div className="drawn-heart">♡</div><strong>There is good<br />in the everyday.</strong><p>Sometimes, all it takes<br />is a story to see it.</p><div className="note-rule" /><small>HEART WITNESS</small></div>
+          <div className="art-label">Little stories. Big feelings.</div>
         </div>
       </section>
+      <div className="values-strip"><span>Every story starts with a little</span><Link href="/stories?theme=love">♡ Love</Link><Link href="/stories?theme=respect">✧ Respect</Link><Link href="/stories?theme=gratitude">☼ Gratitude</Link><Link href="/stories?theme=kindness">❋ Kindness</Link></div>
 
       {/* Featured stories */}
-      <section className="max-w-5xl mx-auto px-4 py-14">
+      <section className="max-w-6xl mx-auto px-5 py-16">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Recent Stories</h2>
-          <Link href="/stories" className="text-rose-600 text-sm font-medium hover:underline">
+          <div><p className="eyebrow mb-2">FROM THE COMMUNITY</p><h2 className="section-heading">A little good, lately.</h2></div>
+          <Link href="/stories" className="text-terracotta-600 text-sm font-medium hover:underline">
             View all →
           </Link>
         </div>
 
         {stories.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <p className="text-lg mb-2">No stories yet.</p>
-            <p className="text-sm">Be the first to share yours! 🌸</p>
+          <div className="empty-stories text-center py-16 text-muted">
+            <p className="text-lg mb-2">Your story could be the beginning.</p>
+            <p className="text-sm">A small act of kindness. A person you never forgot. Give that moment a home.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -85,6 +69,8 @@ export default async function HomePage() {
                     word_count: story.word_count as number,
                     published_at: story.published_at as Date | null,
                     image_url: story.image_url as string | null,
+                    read_count: story.read_count as number | undefined,
+                    reaction_total: reactionTotal(story.reactions),
                   }}
                 />
               );
@@ -94,19 +80,19 @@ export default async function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-rose-50 border-t border-rose-100 py-14 px-4">
+      <section className="bg-terracotta-50 border-t border-terracotta-100 py-14 px-4">
         <div className="max-w-xl mx-auto text-center">
-          <h3 className="text-xl font-bold text-gray-900 mb-3">
-            Have a story to share?
+          <h3 className="text-xl font-bold text-ink mb-3">
+            The ordinary moments are often the extraordinary ones.
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted mb-6">
             Your story doesn&apos;t need to be perfect — just real.
           </p>
           <Link
             href="/submit"
-            className="bg-rose-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-rose-700 transition-colors"
+            className="bg-terracotta-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-terracotta-700 transition-colors"
           >
-            Share My Story 🌸
+            Share my story →
           </Link>
         </div>
       </section>

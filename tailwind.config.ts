@@ -8,14 +8,35 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "Arial", "sans-serif"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+      },
+      // Heart Witness palette
       colors: {
-        poppylat: {
-          50: "#fff1f2",
-          100: "#ffe4e6",
-          500: "#f43f5e",
-          600: "#e11d48",
-          700: "#be123c",
+        cream: "#FAF7F2", // page & navbar background
+        ink: "#44332D", // headings and primary text
+        muted: {
+          DEFAULT: "#75675F", // paragraphs and secondary text
+          light: "#A39589", // hints, placeholders
         },
+        sand: {
+          DEFAULT: "#E8D8C7", // borders and dividers
+          light: "#F3EBE1", // subtle fills (tags, hovers)
+        },
+        // Brand accent — 600 is the primary button colour
+        terracotta: {
+          50: "#FBF1EC",
+          100: "#F6E6E0",
+          200: "#ECCFC4",
+          300: "#DDB3A5",
+          500: "#C27460",
+          600: "#B76550",
+          700: "#9E5242",
+        },
+      },
+      borderColor: {
+        DEFAULT: "#E8D8C7",
       },
     },
   },

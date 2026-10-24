@@ -9,6 +9,12 @@ import { authOptions } from "@/lib/auth";
 import { Story, IStoryDoc } from "@/models/Story";
 import { StoryImage } from "@/components/StoryImage";
 import { RegenerateImageButton } from "./RegenerateImageButton";
+import { StoryEngagement } from "@/components/StoryEngagement";
+import { StoryShare } from "@/components/StoryShare";
+import { getSiteUrl } from "@/lib/site";
+import { Reaction } from "@/models/Reaction";
+import { getReactorKey } from "@/lib/reactor";
+import type { ReactionType } from "@/types";
 import type { FlattenMaps, Types } from "mongoose";
 
 type LeanStory = FlattenMaps<IStoryDoc> & { _id: Types.ObjectId };
@@ -46,17 +52,26 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const story = await getStory(id);
-  if (!story) return { title: "Story not found" };
+  if (!story) return { title: "Story not found", robots: { index: false, follow: false } };
+
+  const url = new URL(`/stories/${String(story._id)}`, getSiteUrl()).toString();
+  const description = `A story about ${story.theme.join(" & ")} by ${story.display_name} on Heart Witness.`;
+  const image = story.image_url || new URL("/opengraph-image", getSiteUrl()).toString();
 
   return {
     title: story.title,
-    description: `A story about ${story.theme.join(" & ")} by ${story.display_name}`,
+    description,
+    alternates: { canonical: url },
     openGraph: {
       title: story.title,
-      description: `A story about ${story.theme.join(" & ")} by ${story.display_name}`,
+      description,
+      url,
+      siteName: "Heart Witness",
       type: "article",
-      ...(story.image_url ? { images: [story.image_url] } : {}),
+      images: [{ url: image, alt: story.image_url ? story.title : "Heart Witness — stories worth sharing" }],
+      ...(story.published_at ? { publishedTime: new Date(story.published_at).toISOString() } : {}),
     },
+    twitter: { card: "summary_large_image", title: story.title, description, images: [image] },
   };
 }
 
@@ -72,6 +87,16 @@ export default async function StoryPage({
   const session = await getServerSession(authOptions);
   const isAdmin = !!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin;
 
+  const reactorKey = await getReactorKey();
+  const myReactions = reactorKey
+    ? (
+        await Reaction.find(
+          { story_id: story._id, reactor_key: reactorKey },
+          { type: 1 }
+        ).lean<{ type: ReactionType }[]>()
+      ).map((r) => r.type)
+    : [];
+
   const readMinutes = Math.max(1, Math.ceil(story.word_count / 200));
   const publishedDate = story.published_at
     ? new Date(story.published_at).toLocaleDateString("en-US", {
@@ -86,7 +111,7 @@ export default async function StoryPage({
       {/* Back link */}
       <Link
         href="/stories"
-        className="text-sm text-gray-500 hover:text-rose-600 transition-colors mb-8 inline-block"
+        className="text-sm text-muted hover:text-terracotta-600 transition-colors mb-8 inline-block"
       >
         ← Back to stories
       </Link>
@@ -107,7 +132,7 @@ export default async function StoryPage({
         {story.theme.map((t) => (
           <span
             key={t}
-            className={`text-sm px-3 py-1 rounded-full font-medium ${THEME_STYLES[t] ?? "bg-gray-100 text-gray-600"}`}
+            className={`text-sm px-3 py-1 rounded-full font-medium ${THEME_STYLES[t] ?? "bg-sand-light text-muted"}`}
           >
             {THEME_LABELS[t] ?? t}
           </span>
@@ -115,15 +140,15 @@ export default async function StoryPage({
       </div>
 
       {/* Title */}
-      <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">
+      <h1 className="text-3xl font-bold text-ink mb-4 leading-tight">
         {story.title}
       </h1>
 
       {/* Meta */}
-      <div className="flex items-center gap-4 text-sm text-gray-500 mb-8 pb-8 border-b">
+      <div className="flex items-center gap-4 text-sm text-muted mb-8 pb-8 border-b">
         <span>By {story.display_name}</span>
         <span>·</span>
-        <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+        <span className="bg-sand-light text-muted px-2 py-0.5 rounded-full">
           ⏱ {readMinutes} min read
         </span>
         {publishedDate && (
@@ -145,7 +170,7 @@ export default async function StoryPage({
       <div className="story-body">
         {story.body.split("\n").map((paragraph, i) =>
           paragraph.trim() ? (
-            <p key={i} className="mb-4 text-gray-800 leading-relaxed">
+            <p key={i} className="mb-4 text-muted leading-relaxed">
               {paragraph}
             </p>
           ) : (
@@ -154,12 +179,27 @@ export default async function StoryPage({
         )}
       </div>
 
+      {/* Reads & reactions */}
+      <StoryEngagement
+        storyId={String(story._id)}
+        initialReadCount={story.read_count ?? 0}
+        initialCounts={{
+          gratitude: story.reactions?.gratitude ?? 0,
+          respect: story.reactions?.respect ?? 0,
+          love: story.reactions?.love ?? 0,
+          applause: story.reactions?.applause ?? 0,
+        }}
+        initialMine={myReactions}
+      />
+
+      <StoryShare title={story.title} url={new URL(`/stories/${String(story._id)}`, getSiteUrl()).toString()} />
+
       {/* Footer CTA */}
       <div className="mt-12 pt-8 border-t text-center">
-        <p className="text-gray-600 mb-4">Moved by this story?</p>
+        <p className="text-muted mb-4">Moved by this story?</p>
         <Link
           href="/submit"
-          className="bg-rose-600 text-white px-6 py-2.5 rounded-full font-medium hover:bg-rose-700 transition-colors"
+          className="bg-terracotta-600 text-white px-6 py-2.5 rounded-full font-medium hover:bg-terracotta-700 transition-colors"
         >
           Share yours 🌸
         </Link>

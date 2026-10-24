@@ -61,7 +61,7 @@ export function StoryImage({
     <div
       aria-hidden
       style={{ aspectRatio: `${width} / ${height}` }}
-      className={`w-full bg-gradient-to-br ${PLACEHOLDER_STYLES[primary] ?? "from-gray-100 to-gray-50"} flex items-center justify-center ${className}`}
+      className={`w-full bg-gradient-to-br ${PLACEHOLDER_STYLES[primary] ?? "from-sand-light to-cream"} flex items-center justify-center ${className}`}
     >
       <span className="text-4xl opacity-40">{PLACEHOLDER_EMOJI[primary] ?? "🌸"}</span>
     </div>

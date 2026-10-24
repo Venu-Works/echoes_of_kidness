@@ -28,11 +28,12 @@ export function ThemeFilter() {
       {THEMES.map(({ value, label }) => (
         <button
           key={value}
+          aria-pressed={current === value}
           onClick={() => handleFilter(value)}
           className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
             current === value
-              ? "bg-rose-600 text-white border-rose-600"
-              : "bg-white text-gray-600 border-gray-300 hover:border-rose-300 hover:text-rose-600"
+              ? "bg-terracotta-600 text-white border-terracotta-600"
+              : "bg-white text-muted border-sand hover:border-terracotta-300 hover:text-terracotta-600"
           }`}
         >
           {label}

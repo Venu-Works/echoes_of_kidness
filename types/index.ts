@@ -1,5 +1,9 @@
 export type StoryStatus = "pending" | "approved" | "rejected" | "human_review";
 export type ThemeTag = "love" | "respect" | "gratitude" | "kindness";
+export const REACTION_TYPES = ["gratitude", "respect", "love", "applause"] as const;
+export type ReactionType = (typeof REACTION_TYPES)[number];
+export type ReactionCounts = Record<ReactionType, number>;
+
 export type AuthProvider = "google" | "facebook" | "twitter" | "credentials" | "anonymous";
 
 export interface SafetyResult {

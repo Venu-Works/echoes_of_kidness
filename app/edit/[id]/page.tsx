@@ -44,19 +44,19 @@ export default async function EditStoryPage({
     <div className="max-w-2xl mx-auto px-4 py-12">
       <Link
         href="/profile"
-        className="text-sm text-gray-500 hover:text-rose-600 transition-colors mb-8 inline-block"
+        className="text-sm text-muted hover:text-terracotta-600 transition-colors mb-8 inline-block"
       >
         ← Back to my stories
       </Link>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit & Resubmit</h1>
+        <h1 className="text-3xl font-bold text-ink mb-2">Edit & Resubmit</h1>
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
           This story was not published. Edit it below and resubmit for review.
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8">
+      <div className="bg-white rounded-xl border border-sand p-6 md:p-8">
         <EditForm
           storyId={id}
           initialTitle={story.title}

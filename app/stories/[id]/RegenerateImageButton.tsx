@@ -25,13 +25,13 @@ export function RegenerateImageButton({
 
   return (
     <div className="flex items-center gap-3 text-sm mb-8">
-      <span className="text-gray-400">Admin:</span>
+      <span className="text-muted-light">Admin:</span>
       {state === "queued" ? (
         <>
           <span className="text-amber-600">🎨 Image is being generated…</span>
           <button
             onClick={() => router.refresh()}
-            className="text-gray-500 underline hover:text-gray-800"
+            className="text-muted underline hover:text-ink"
           >
             Refresh
           </button>
@@ -40,7 +40,7 @@ export function RegenerateImageButton({
         <button
           onClick={regenerate}
           disabled={state === "loading"}
-          className="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          className="px-3 py-1 border border-sand rounded-lg text-ink hover:bg-cream disabled:opacity-50 transition-colors"
         >
           {state === "loading" ? "Queuing..." : "🎨 Regenerate image"}
         </button>
