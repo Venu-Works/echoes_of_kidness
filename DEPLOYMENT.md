@@ -37,8 +37,9 @@ Use `.env.example` as a list of names, not production values. Configure producti
 | `CLOUDINARY_CLOUD_NAME` | — | Required | Image storage |
 | `CLOUDINARY_API_KEY` | — | Required | Image storage |
 | `CLOUDINARY_API_SECRET` | — | Required | Image storage |
-| `RESEND_API_KEY` | — | Required | Author notifications |
-| `EMAIL_FROM` | — | Required | For example `Heart Witness <noreply@your-domain.com>`; verify the domain in Resend |
+| `EMAIL_ENABLED` | — | Optional | Set `false` to launch without email; defaults to enabled when unset |
+| `RESEND_API_KEY` | — | If email enabled | Author notifications |
+| `EMAIL_FROM` | — | If email enabled | For example `Heart Witness <noreply@your-domain.com>`; verify the domain in Resend |
 | `MODERATION_CONCURRENCY` | — | Optional | Default 3; integer 1–20 |
 | `ILLUSTRATION_CONCURRENCY` | — | Optional | Default 2; integer 1–20 |
 
@@ -57,7 +58,7 @@ These validate configuration shape, not credentials, provider permissions, or co
 
 1. Create a production MongoDB database user and permit both web and worker egress networks. Avoid a publicly unrestricted database allowlist; use provider-supported network controls where available. Enable backups and verify the restore procedure.
 2. Provision BullMQ-compatible Redis with persistence and **`maxmemory-policy=noeviction`**. Enable TLS for connections over public networks. Size connections and storage for the web instances and worker consumers. Do not use Redis as a disposable cache for this application.
-3. Verify the sending domain in Resend and add the required DNS records. Set `EMAIL_FROM` to that verified address.
+3. For an initial launch without email, set `EMAIL_ENABLED=false` on the worker and omit `RESEND_API_KEY`/`EMAIL_FROM`. Notifications are skipped, while moderation and illustrations continue. Authors check status in My stories. To enable notifications later, verify a sending domain in Resend, configure `RESEND_API_KEY` and `EMAIL_FROM`, and set `EMAIL_ENABLED=true` for a subsequent tagged release.
 4. Configure Cloudinary and provider API credentials. Check AI model access and set spending/usage alerts.
 5. Prefer nearby regions for web compute, MongoDB, Redis, and Render. `render.yaml` starts with Singapore; select available nearby regions for the other services.
 
@@ -76,7 +77,7 @@ The web application's `/api/health` returns 200 with `{ "status": "ok" }` and no
 1. Create a Blueprint from `render.yaml` in the same repository. It defines only the background worker and disables automatic commit deploys. Render may start an initial provisioning deployment when creating a service: keep production credentials unset until you deliberately release a tag. Do not create a second public web app there.
 2. Review the selected instance and billing settings in Render before creating it. Supply worker variables when prompted. For Gemini text generation, set `AI_PROVIDER=gemini`; Anthropic is then unnecessary.
 3. Build command: `npm ci --include=dev`. Start command: `npm run worker:production`, which validates the production environment before starting consumers.
-4. Confirm startup and Redis connectivity in logs. Keep at least one worker running continuously; it needs no public domain or inbound port.
+4. The Blueprint starts with `EMAIL_ENABLED=false`; use the same setting for a manually created worker when deferring Resend. Confirm startup and Redis connectivity in logs. Keep at least one worker running continuously; it needs no public domain or inbound port.
 5. Set Auto-Deploy to **Off** for an existing worker, too; editing the local Blueprint alone does not change an existing service until synced. Release the same commit to web and worker through the tag workflow below. Give workers time to finish active jobs during shutdown. Forced interruption can lead to reprocessing; BullMQ uses at-least-once delivery, so external AI/email calls are not guaranteed exactly once.
 
 `SIGTERM`/`SIGINT` stop consumers from taking new jobs, wait for active jobs, then close producer connections and MongoDB. Platform shutdown deadlines still apply. Moderation updates are conditional on the submission remaining pending with unchanged content/revision, so a worker cannot overwrite an administrator's decision made during processing.
@@ -126,7 +127,7 @@ The GitHub workflow runs lint, unit tests, a dependency audit, and a production 
 - Verify CI on Node 22 and run `npm audit`; review advisories before launch. Audit development dependencies too because the worker uses tsx at runtime.
 - Open the homepage, browse/filter stories, and check an individual published story on mobile and desktop.
 - Register a staging account, log in/out, and verify protected profile/admin routes.
-- Submit one staging story and watch it proceed through moderation, publication, illustration, and email. Confirm the administrator can review a borderline story. This smoke test uses real provider quotas.
+- Submit one staging story and watch it proceed through moderation, publication, illustration, and email when enabled. With `EMAIL_ENABLED=false`, confirm author status updates without email-provider calls. Confirm the administrator can review a borderline story. This smoke test uses real provider quotas.
 - Confirm another production-mode submission within the hour returns 429 and `Retry-After`. Use separate staging data; do not use real author submissions for testing.
 - Check public social previews and copy/share links. See `SOCIAL_SHARING.md`.
 - Set alerts for HTTP 5xx, oldest pending stories, failed jobs, Redis memory/connections, database connections, email delivery failures, and provider spending. Worker logs alone are not an alerting system.

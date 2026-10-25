@@ -53,6 +53,20 @@ test("worker rejects unsupported providers and unsafe concurrency", () => {
     assert.ok(validateEnvironment({ ...worker, MODERATION_CONCURRENCY: value }, "worker", true).some((error) => error.includes("MODERATION_CONCURRENCY")));
   }
 });
+
+test("worker can start with email explicitly disabled and no Resend configuration", () => {
+  assert.deepEqual(validateEnvironment({ ...worker, EMAIL_ENABLED: "false", RESEND_API_KEY: "", EMAIL_FROM: "" }, "worker", true), []);
+});
+test("email credentials remain required by default or when enabled", () => {
+  for (const enabled of [undefined, "true"]) {
+    const errors = validateEnvironment({ ...worker, EMAIL_ENABLED: enabled, RESEND_API_KEY: "", EMAIL_FROM: "" }, "worker", true);
+    assert.ok(errors.some((error) => error.includes("RESEND_API_KEY")));
+    assert.ok(errors.some((error) => error.includes("EMAIL_FROM")));
+  }
+});
+test("typos in the email switch cannot silently disable notifications", () => {
+  assert.ok(validateEnvironment({ ...worker, EMAIL_ENABLED: "flase" }, "worker", true).some((error) => error.includes("EMAIL_ENABLED")));
+});
 test("recovering the same submission uses the same queue ID", () => {
   assert.equal(moderationJobId("story-1", "body", "title", ["love"]), moderationJobId("story-1", "body", "title", ["love"]));
 });

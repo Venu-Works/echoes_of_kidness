@@ -22,6 +22,7 @@ export async function sendApprovalEmail(
   storyTitle: string,
   storyId: string
 ) {
+  if (process.env.EMAIL_ENABLED === "false") return;
   try {
     await sendEmail({
       from: FROM,
@@ -52,6 +53,7 @@ export async function sendRejectionEmail(
   storyTitle: string,
   reason: string
 ) {
+  if (process.env.EMAIL_ENABLED === "false") return;
   try {
     await sendEmail({
       from: FROM,

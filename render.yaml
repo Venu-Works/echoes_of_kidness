@@ -12,6 +12,8 @@ services:
         value: "22"
       - key: NODE_ENV
         value: production
+      - key: EMAIL_ENABLED
+        value: "false"
       - key: AI_PROVIDER
         value: claude
       - key: MONGODB_URI
@@ -29,8 +31,4 @@ services:
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
-        sync: false
-      - key: RESEND_API_KEY
-        sync: false
-      - key: EMAIL_FROM
         sync: false

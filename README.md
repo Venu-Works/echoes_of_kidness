@@ -46,7 +46,7 @@ The web app and API live in the same repository and run as one Next.js service. 
 2. A BullMQ job runs checks for safety, theme relevance, and quality.
 3. Decision rules approve the story, reject it, or send it for human review. Automated review errors are routed to human review.
 4. Approved stories become public, and a separate job generates an illustration and uploads it to Cloudinary.
-5. The worker attempts to email signed-in authors when a story is approved or rejected.
+5. When email is enabled, the worker attempts to notify signed-in authors when a story is approved or rejected.
 
 Story status and illustration status are separate. A published story can be read while its image is still being prepared. Guest submissions are not attached to an account and do not appear in an account's story history.
 
@@ -111,7 +111,7 @@ For the worker, also configure:
 - `ANTHROPIC_API_KEY` when using Claude for text processing.
 - `GEMINI_API_KEY` for illustrations, and for text processing when Gemini is selected.
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`.
-- `RESEND_API_KEY` and `EMAIL_FROM`, using a sender domain verified in Resend.
+- For email notifications, `RESEND_API_KEY` and `EMAIL_FROM`, using a sender domain verified in Resend. To defer email setup, set `EMAIL_ENABLED=false`; moderation and illustrations still run, and authors check status on the website.
 
 Optional settings include `GEMINI_IMAGE_MODEL`, `MODERATION_CONCURRENCY`, and `ILLUSTRATION_CONCURRENCY`. See the [full environment-variable reference](DEPLOYMENT.md#environment-variables) for details.
 

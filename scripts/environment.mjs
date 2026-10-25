@@ -1,10 +1,12 @@
 export function validateEnvironment(env, target, production) {
   const errors = [];
   const required = target === "worker"
-    ? ["MONGODB_URI", "REDIS_URL", "SITE_URL", "GEMINI_API_KEY", "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET", "RESEND_API_KEY", "EMAIL_FROM"]
+    ? ["MONGODB_URI", "REDIS_URL", "SITE_URL", "GEMINI_API_KEY", "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"]
     : ["MONGODB_URI", "REDIS_URL", "SITE_URL", "NEXTAUTH_URL", "NEXTAUTH_SECRET", "ADMIN_EMAILS"];
   const provider = env.AI_PROVIDER || "claude";
   if (target === "worker") {
+    if (env.EMAIL_ENABLED !== undefined && !["true", "false"].includes(env.EMAIL_ENABLED)) errors.push("EMAIL_ENABLED must be true or false");
+    if (env.EMAIL_ENABLED !== "false") required.push("RESEND_API_KEY", "EMAIL_FROM");
     if (!["claude", "gemini"].includes(provider)) errors.push("AI_PROVIDER must be claude or gemini");
     if (provider === "claude") required.push("ANTHROPIC_API_KEY");
     for (const name of ["MODERATION_CONCURRENCY", "ILLUSTRATION_CONCURRENCY"]) {
@@ -30,6 +32,6 @@ export function validateEnvironment(env, target, production) {
       catch { errors.push(`${key} has an invalid connection URL`); }
     }
   }
-  if (target === "worker" && env.EMAIL_FROM && !/^[^<>]*<?[^<>\s@]+@[^<>\s@]+\.[^<>\s@]+>?$/.test(env.EMAIL_FROM)) errors.push("EMAIL_FROM must contain a sender email address");
+  if (target === "worker" && env.EMAIL_ENABLED !== "false" && env.EMAIL_FROM && !/^[^<>]*<?[^<>\s@]+@[^<>\s@]+\.[^<>\s@]+>?$/.test(env.EMAIL_FROM)) errors.push("EMAIL_FROM must contain a sender email address");
   return errors;
 }
