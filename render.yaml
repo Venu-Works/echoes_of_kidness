@@ -3,6 +3,7 @@ services:
   - type: worker
     name: heart-witness-worker
     runtime: node
+    autoDeployTrigger: "off"
     region: singapore
     buildCommand: npm ci --include=dev
     startCommand: npm run worker:production

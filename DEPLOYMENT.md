@@ -61,25 +61,63 @@ These validate configuration shape, not credentials, provider permissions, or co
 4. Configure Cloudinary and provider API credentials. Check AI model access and set spending/usage alerts.
 5. Prefer nearby regions for web compute, MongoDB, Redis, and Render. `render.yaml` starts with Singapore; select available nearby regions for the other services.
 
-## Deploy the web app on Vercel
+## Create the web project on Vercel
 
-1. Import this repository as a Next.js project and choose Node 22.x.
+1. Create/import this repository as a Next.js project and choose Node 22.x. Do not start an initial deployment; production releases are tag-triggered as described below.
 2. Set the web variables above in the intended environment. Configure Preview separately using staging credentials and a staging domain; the production checks require public HTTPS origins.
 3. Vercel reads `vercel.json`: install is `npm ci`; build is `npm run env:check -- --production && npm run build`.
 4. Attach the public domain, apply the DNS records supplied by Vercel, and confirm HTTPS. Choose one canonical origin and redirect the alternate `www`/root domain to it.
-5. Ensure `SITE_URL` and `NEXTAUTH_URL` match that canonical origin, then redeploy so metadata, authentication, and emails use it.
+5. Ensure `SITE_URL` and `NEXTAUTH_URL` match that canonical origin. Their new values take effect on the next tagged release. Until the custom domain is ready, use `https://echoes-of-kidness.vercel.app` for both.
 
 The web application's `/api/health` returns 200 with `{ "status": "ok" }` and no secrets. It is a **liveness** check, not a MongoDB/Redis readiness check. Monitor dependencies independently and run an end-to-end smoke test.
 
 ## Deploy the worker on Render
 
-1. Create a Blueprint from `render.yaml` in the same repository. It defines only the background worker; do not create a second public web app there.
+1. Create a Blueprint from `render.yaml` in the same repository. It defines only the background worker and disables automatic commit deploys. Render may start an initial provisioning deployment when creating a service: keep production credentials unset until you deliberately release a tag. Do not create a second public web app there.
 2. Review the selected instance and billing settings in Render before creating it. Supply worker variables when prompted. For Gemini text generation, set `AI_PROVIDER=gemini`; Anthropic is then unnecessary.
 3. Build command: `npm ci --include=dev`. Start command: `npm run worker:production`, which validates the production environment before starting consumers.
 4. Confirm startup and Redis connectivity in logs. Keep at least one worker running continuously; it needs no public domain or inbound port.
-5. Deploy a compatible web/worker commit together. Initially keep promotion/deployment manual until CI is green. Give workers time to finish active jobs during shutdown. Forced interruption can lead to reprocessing; BullMQ uses at-least-once delivery, so external AI/email calls are not guaranteed exactly once.
+5. Set Auto-Deploy to **Off** for an existing worker, too; editing the local Blueprint alone does not change an existing service until synced. Release the same commit to web and worker through the tag workflow below. Give workers time to finish active jobs during shutdown. Forced interruption can lead to reprocessing; BullMQ uses at-least-once delivery, so external AI/email calls are not guaranteed exactly once.
 
 `SIGTERM`/`SIGINT` stop consumers from taking new jobs, wait for active jobs, then close producer connections and MongoDB. Platform shutdown deadlines still apply. Moderation updates are conditional on the submission remaining pending with unchanged content/revision, so a worker cannot overwrite an administrator's decision made during processing.
+
+## Production releases are controlled by tags
+
+Ordinary commits and branch pushes run validation only. `.github/workflows/release.yml` starts exclusively when a `v*` tag is pushed and accepts stable tags such as `v1.0.0`. The tagged commit must be on `main`. There is no manual workflow-dispatch trigger.
+
+### One-time release setup
+
+1. Commit the release workflow and host configs to `main` before creating a release tag. `vercel.json` sets `git.deploymentEnabled=false`; `render.yaml` sets `autoDeployTrigger=off`.
+2. Disconnect the Vercel project's direct Git connection under **Settings → Git** to prevent other branches with older configs from creating direct deployments. The CLI release workflow still deploys to the existing project by ID. This connection removal must be confirmed in the dashboard; the local config alone is not a persisted dashboard setting.
+3. Create a GitHub environment named `production` under repository **Settings → Environments**. Restrict deployment branches/tags to selected tags matching `v*`. Restrict who can create/change release tags with a repository tag ruleset. Optional required reviewers provide an additional approval step; the default workflow relies on the tag as authorization.
+4. Add these secrets to the GitHub `production` environment:
+
+   | Secret | Value |
+   | --- | --- |
+   | `VERCEL_TOKEN` | A Vercel access token belonging to the project owner; keep it private |
+   | `VERCEL_ORG_ID` | Vercel team/account ID, available in team settings or `vercel link` output |
+   | `VERCEL_PROJECT_ID` | Project ID from Vercel project settings |
+   | `RENDER_API_KEY` | Render API key authorized to deploy the worker |
+   | `RENDER_SERVICE_ID` | The worker service ID (`srv-...`) |
+
+5. Configure application secrets in Vercel/Render as listed above. The workflow fetches Vercel production build settings with `vercel pull`; database and AI keys do not need to be duplicated as GitHub secrets.
+
+Do not create a release tag until the accounts, runtime variables, worker service, and five workflow secrets are ready. Dashboard deployment buttons, CLI tokens, and administrators can still deploy manually; limiting those permissions is necessary if tag-only deployment must be enforced against other account holders.
+
+### Your release command
+
+After committing and pushing the desired changes to `main`, create and push the tag yourself:
+
+```sh
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+Use a fresh version for each release. Creating a local tag alone does not deploy; pushing it starts **Release production** in GitHub Actions. Never move an already released tag to a different commit.
+
+The workflow validates the tag and credentials, runs lint/tests/audit, builds the tagged web app, then deploys that exact commit to Render and verifies it is live before deploying the Vercel prebuilt output. Releases are serialized. If the worker fails or returns a different commit, the web deployment does not start. A later web failure can leave the worker upgraded while the web remains on its previous version: releases are not atomic across providers, so keep queue/database changes backward compatible and inspect both dashboards after failures. Retrying a run can redeploy the same commit.
+
+No release tag is created or pushed automatically. Host services and GitHub secrets are not provisioned by this workflow.
 
 ## Validation and release
 
