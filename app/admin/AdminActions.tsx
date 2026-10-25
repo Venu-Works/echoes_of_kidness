@@ -27,7 +27,7 @@ export function AdminActions({ storyId }: { storyId: string }) {
 
   if (done) {
     return (
-      <p className="text-sm text-green-600 font-medium">✅ Decision recorded</p>
+      <p className="text-sm text-green-600 font-medium">✅ Decision recorded.</p>
     );
   }
 
@@ -38,14 +38,14 @@ export function AdminActions({ storyId }: { storyId: string }) {
         disabled={!!loading}
         className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
       >
-        {loading === "approve" ? "Approving..." : "✅ Approve"}
+        {loading === "approve" ? "Approving…" : "✅ Approve"}
       </button>
       <button
         onClick={() => handleAction("reject")}
         disabled={!!loading}
         className="px-5 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
       >
-        {loading === "reject" ? "Rejecting..." : "❌ Reject"}
+        {loading === "reject" ? "Rejecting…" : "❌ Reject"}
       </button>
     </div>
   );

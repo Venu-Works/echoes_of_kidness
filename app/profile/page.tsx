@@ -8,13 +8,13 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Story } from "@/models/Story";
 
-export const metadata: Metadata = { title: "My Stories" };
+export const metadata: Metadata = { title: "My stories" };
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  pending: { label: "Under Review", className: "bg-amber-100 text-amber-700" },
+  pending: { label: "Under review", className: "bg-amber-100 text-amber-700" },
   approved: { label: "Published", className: "bg-green-100 text-green-700" },
-  rejected: { label: "Not Published", className: "bg-red-100 text-red-700" },
-  human_review: { label: "Human Review", className: "bg-purple-100 text-purple-700" },
+  rejected: { label: "Not published", className: "bg-red-100 text-red-700" },
+  human_review: { label: "Awaiting a reviewer", className: "bg-purple-100 text-purple-700" },
 };
 
 export default async function ProfilePage({
@@ -36,21 +36,21 @@ export default async function ProfilePage({
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-ink mb-1">My Stories</h1>
+        <h1 className="text-3xl font-bold text-ink mb-1">My stories</h1>
         <p className="text-muted">
-          Welcome back, {session.user?.name} 👋
+          Welcome back, {session.user?.name}! 👋
         </p>
       </div>
 
       {submitted === "1" && (
         <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-6 text-green-800 text-sm">
-          🌸 Your story has been submitted and is under review. We&apos;ll notify you by email once it&apos;s published.
+          🌸 Your story has been submitted and is under review. You can check its status here.
         </div>
       )}
 
       {submitted === "resubmitted" && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6 text-blue-800 text-sm">
-          🌸 Your updated story has been resubmitted and is under review.
+          🌸 Your updated story has been submitted for another review.
         </div>
       )}
 
@@ -115,7 +115,7 @@ export default async function ProfilePage({
                         href={`/edit/${String(story._id)}`}
                         className="inline-block mt-3 text-sm font-medium text-terracotta-600 border border-terracotta-300 px-3 py-1 rounded-full hover:bg-terracotta-50 transition-colors"
                       >
-                        ✏️ Edit &amp; Resubmit
+                        ✏️ Edit and resubmit
                       </Link>
                     )}
                   </div>

@@ -2,11 +2,19 @@
   "name": "poppylat-stories",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint app components lib models scripts tests --ext .ts,.tsx,.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "env:check": "node scripts/check-env.mjs",
+    "worker:production": "npm run env:check -- --worker --production && npm run worker",
+    "queue:recover": "tsx -r dotenv/config scripts/recover-moderation.ts dotenv_config_path=.env.local",
     "worker": "tsx -r dotenv/config lib/queue/worker.ts dotenv_config_path=.env.local",
     "backfill-images": "tsx scripts/backfill-images.ts"
   },
@@ -20,14 +28,19 @@
     "dotenv": "^16.4.7",
     "ioredis": "^5.6.1",
     "mongoose": "^8.14.0",
-    "next": "15.5.15",
+    "next": "15.5.28",
     "next-auth": "^4.24.11",
-    "postcss": "^8.5.3",
+    "postcss": "^8.5.31",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "resend": "^4.2.0",
     "tailwindcss": "^3.4.17",
-    "zod": "^3.24.4"
+    "zod": "4.6.7"
+  },
+  "overrides": {
+    "next": { "postcss": "8.5.31" },
+    "postcss-selector-parser": "^7.1.6",
+    "tsx": { "esbuild": "^0.28.1" }
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -35,7 +48,7 @@
     "@types/react": "^18.3.20",
     "@types/react-dom": "^18.3.5",
     "eslint": "^8",
-    "eslint-config-next": "15.5.15",
+    "eslint-config-next": "15.5.28",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3"
   }

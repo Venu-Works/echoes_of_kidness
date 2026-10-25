@@ -93,7 +93,7 @@ export function EditForm({
       {/* Title */}
       <div>
         <label className="block text-sm font-semibold text-ink mb-1.5">
-          Story Title
+          Story title
         </label>
         <input
           value={title}
@@ -107,7 +107,7 @@ export function EditForm({
       {/* Story body */}
       <div>
         <div className="flex justify-between items-center mb-1.5">
-          <label className="text-sm font-semibold text-ink">Your Story</label>
+          <label className="text-sm font-semibold text-ink">Your story</label>
           <span
             className={`text-sm font-medium tabular-nums ${
               overLimit
@@ -132,10 +132,10 @@ export function EditForm({
           required
         />
         {overLimit && (
-          <p className="text-red-600 text-sm mt-1">Please trim to 500 words or fewer.</p>
+          <p className="text-red-600 text-sm mt-1">Please trim your story to 500 words or fewer.</p>
         )}
         {underMinimum && (
-          <p className="text-amber-600 text-sm mt-1">Stories must be at least 50 words.</p>
+          <p className="text-amber-600 text-sm mt-1">Stories must be at least 50 words long.</p>
         )}
       </div>
 
@@ -197,7 +197,7 @@ export function EditForm({
         disabled={submitting || overLimit || themes.length === 0 || wordCount < MIN_WORDS}
         className="w-full bg-terracotta-600 text-white py-3 rounded-lg font-semibold hover:bg-terracotta-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {submitting ? "Resubmitting..." : "Resubmit for Review 🌸"}
+        {submitting ? "Resubmitting…" : "Resubmit for review 🌸"}
       </button>
     </form>
   );

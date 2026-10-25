@@ -24,17 +24,17 @@ export function Navbar() {
             href="/submit"
             className="bg-terracotta-600 text-white px-4 py-1.5 rounded-full hover:bg-terracotta-700 transition-colors"
           >
-            Share a Story
+            Share a story
           </Link>
 
           {status === "loading" ? null : session ? (
             <>
               <Link href="/profile" className="text-ink hover:text-terracotta-600 transition-colors">
-                My Stories
+                My stories
               </Link>
               {isAdmin && (
                 <Link href="/admin" className="text-ink hover:text-terracotta-600 transition-colors">
-                  Review Queue
+                  Review queue
                 </Link>
               )}
               <button

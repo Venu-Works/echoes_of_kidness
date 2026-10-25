@@ -6,7 +6,7 @@ import { Worker, UnrecoverableError } from "bullmq";
 import IORedis from "ioredis";
 import mongoose from "mongoose";
 import type { ModerationJobData, IllustrationJobData } from "./queue";
-import { enqueueIllustration } from "./queue";
+import { enqueueIllustration, closeQueues } from "./queue";
 import { describeScene, renderImage } from "@/lib/ai/illustrate";
 import { uploadStoryImage, ensureConfigured as ensureCloudinaryConfigured } from "@/lib/cloudinary";
 import { runSafetyAgent } from "@/lib/agents/safetyAgent";
@@ -18,6 +18,14 @@ import { ModerationLog } from "@/models/ModerationLog";
 import { sendApprovalEmail, sendRejectionEmail } from "@/lib/email";
 import { ThemeTag } from "@/types";
 
+const workerConnections: IORedis[] = [];
+
+function concurrency(name: string, fallback: number): number {
+  const value = Number(process.env[name] ?? fallback);
+  if (!Number.isInteger(value) || value < 1 || value > 20) throw new Error(`${name} must be an integer from 1 to 20`);
+  return value;
+}
+
 async function ensureDBConnected() {
   if (mongoose.connection.readyState !== 1) {
     await mongoose.connect(process.env.MONGODB_URI!);
@@ -26,19 +34,26 @@ async function ensureDBConnected() {
 
 function createRedisConnection() {
   const url = process.env.REDIS_URL!;
-  return new IORedis(url, {
+  const connection = new IORedis(url, {
     maxRetriesPerRequest: null,
     tls: url.startsWith("rediss://") ? {} : undefined,
   });
+  connection.on("error", () => console.error("[Worker] Redis connection unavailable"));
+  workerConnections.push(connection);
+  return connection;
 }
 
 const worker = new Worker<ModerationJobData>(
   "moderation",
   async (job) => {
-    const { storyId, storyTitle, storyBody, storyThemes, userEmail } = job.data;
+    const { storyId, storyTitle, storyBody, storyThemes, userEmail, submittedAt } = job.data;
     const start = Date.now();
 
     await ensureDBConnected();
+    const current = await Story.findOne({ _id: storyId, status: "pending" });
+    if (!current || (submittedAt && current.submitted_at.toISOString() !== submittedAt) || current.body !== storyBody || current.title !== storyTitle || JSON.stringify(current.theme) !== JSON.stringify(storyThemes)) {
+      return { skipped: true };
+    }
     console.log(`[Worker] Processing story ${storyId}: "${storyTitle}"`);
 
     // Run agents sequentially so prompt cache warms up per-agent across requests
@@ -58,10 +73,12 @@ const worker = new Worker<ModerationJobData>(
     );
 
     const publishedAt = verdict.status === "approved" ? new Date() : null;
-    await Story.findByIdAndUpdate(storyId, {
+    const update = await Story.updateOne({ _id: storyId, status: "pending", body: storyBody, title: storyTitle, theme: storyThemes, ...(submittedAt ? { submitted_at: new Date(submittedAt) } : {}) }, {
       status: verdict.status,
       published_at: publishedAt,
     });
+    // An administrator may have reviewed the story while AI checks were running.
+    if (!update.modifiedCount) return { skipped: true };
 
     if (verdict.status === "approved") {
       try {
@@ -98,7 +115,7 @@ const worker = new Worker<ModerationJobData>(
 
     return verdict;
   },
-  { connection: createRedisConnection(), concurrency: 3 }
+  { connection: createRedisConnection(), concurrency: concurrency("MODERATION_CONCURRENCY", 3) }
 );
 
 worker.on("completed", (job) => {
@@ -154,7 +171,7 @@ const illustrationWorker = new Worker<IllustrationJobData>(
       throw err;
     }
   },
-  { connection: createRedisConnection(), concurrency: 2 }
+  { connection: createRedisConnection(), concurrency: concurrency("ILLUSTRATION_CONCURRENCY", 2) }
 );
 
 illustrationWorker.on("failed", (job, err) => {
@@ -166,3 +183,23 @@ illustrationWorker.on("error", (err) => {
 });
 
 console.log("[Worker] Heart Witness moderation worker started");
+
+let shuttingDown = false;
+async function shutdown(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[Worker] ${signal}: finishing active jobs before shutdown`);
+  // A host may eventually force-kill a job; BullMQ will recover stalled jobs.
+  try {
+    await Promise.all([worker.close(), illustrationWorker.close()]);
+    await closeQueues();
+    for (const connection of workerConnections) connection.disconnect();
+    await mongoose.disconnect();
+    process.exit(0);
+  } catch {
+    console.error("[Worker] Graceful shutdown failed");
+    process.exit(1);
+  }
+}
+process.on("SIGTERM", () => { void shutdown("SIGTERM"); });
+process.on("SIGINT", () => { void shutdown("SIGINT"); });

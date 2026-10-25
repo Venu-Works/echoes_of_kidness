@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 
 const THEMES = [
-  { value: "", label: "All Stories" },
+  { value: "", label: "All stories" },
   { value: "love", label: "❤️ Love" },
   { value: "respect", label: "🤝 Respect" },
   { value: "gratitude", label: "🙏 Gratitude" },

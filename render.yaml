@@ -1,0 +1,35 @@
+# Creates the worker only. The Next.js web app is deployed on Vercel.
+services:
+  - type: worker
+    name: heart-witness-worker
+    runtime: node
+    region: singapore
+    buildCommand: npm ci --include=dev
+    startCommand: npm run worker:production
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: AI_PROVIDER
+        value: claude
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SITE_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false

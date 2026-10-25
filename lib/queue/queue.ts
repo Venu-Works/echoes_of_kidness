@@ -7,17 +7,25 @@ export interface ModerationJobData {
   storyBody: string;
   storyThemes: string[];
   userEmail?: string;
+  submittedAt?: string;
 }
+
+const connections = new Set<IORedis>();
 
 function createRedisConnection() {
   const url = process.env.REDIS_URL;
   if (!url) throw new Error("REDIS_URL environment variable is not defined");
 
-  return new IORedis(url, {
-    maxRetriesPerRequest: null,
+  const connection = new IORedis(url, {
+    maxRetriesPerRequest: 1,
+    connectTimeout: 3000,
+    commandTimeout: 5000,
     // Upstash uses TLS (rediss:// scheme) — ioredis handles it automatically
     tls: url.startsWith("rediss://") ? {} : undefined,
   });
+  connection.on("error", () => console.error("[Queue] Redis connection unavailable"));
+  connections.add(connection);
+  return connection;
 }
 
 // Lazy singleton — only instantiated when first used, not at module import time
@@ -57,6 +65,14 @@ export function getIllustrationQueue(): Queue<IllustrationJobData> {
     });
   }
   return _illustrationQueue;
+}
+
+export async function closeQueues(): Promise<void> {
+  await Promise.all([_queue?.close(), _illustrationQueue?.close()]);
+  for (const connection of connections) connection.disconnect();
+  connections.clear();
+  _queue = null;
+  _illustrationQueue = null;
 }
 
 // Queues an illustration for a story. The jobId stops the same story being

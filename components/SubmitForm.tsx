@@ -77,7 +77,7 @@ export function SubmitForm({ userName }: { userName?: string | null }) {
       {/* Title */}
       <div>
         <label className="block text-sm font-semibold text-ink mb-1.5">
-          Story Title
+          Story title
         </label>
         <input
           value={title}
@@ -93,7 +93,7 @@ export function SubmitForm({ userName }: { userName?: string | null }) {
       <div>
         <div className="flex justify-between items-center mb-1.5">
           <label className="text-sm font-semibold text-ink">
-            Your Story
+            Your story
           </label>
           <span
             className={`text-sm font-medium tabular-nums ${
@@ -113,7 +113,7 @@ export function SubmitForm({ userName }: { userName?: string | null }) {
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={12}
-          placeholder="Share your heartfelt story here... (minimum 50 words)"
+          placeholder="Share your heartfelt story here (50–500 words)."
           className={`w-full border rounded-lg px-4 py-3 text-ink leading-relaxed focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent resize-none ${
             overLimit ? "border-red-400 bg-red-50" : "border-sand"
           }`}
@@ -126,7 +126,7 @@ export function SubmitForm({ userName }: { userName?: string | null }) {
         )}
         {underMinimum && (
           <p className="text-amber-600 text-sm mt-1">
-            Stories must be at least 50 words.
+            Stories must be at least 50 words long.
           </p>
         )}
       </div>
@@ -191,7 +191,7 @@ export function SubmitForm({ userName }: { userName?: string | null }) {
         disabled={submitting || overLimit || themes.length === 0 || wordCount < MIN_WORDS}
         className="w-full bg-terracotta-600 text-white py-3 rounded-lg font-semibold hover:bg-terracotta-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {submitting ? "Submitting..." : "Share My Story 🌸"}
+        {submitting ? "Submitting…" : "Share my story 🌸"}
       </button>
     </form>
   );

@@ -15,10 +15,10 @@ export default async function SubmitPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-ink mb-2">Share Your Story</h1>
+        <h1 className="text-3xl font-bold text-ink mb-2">Share your story</h1>
         <p className="text-muted">
-          Write a heartfelt story about kindness, gratitude, love, or respect — under 500 words.
-          All stories are reviewed before publishing.
+          Write a heartfelt story about kindness, gratitude, love, or respect in 50–500 words.
+          All stories are reviewed before publication.
         </p>
       </div>
 

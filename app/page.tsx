@@ -23,7 +23,7 @@ export default async function HomePage() {
         <div className="hero-copy">
           <p className="eyebrow"><span /> A little space for the good in life</p>
           <h1>Some moments<br />deserve to be<br /><em>remembered.</em></h1>
-          <p className="hero-description">Real people. Small acts. Lasting impact. A home for stories of love, respect, gratitude, and the kindness that connects us.</p>
+          <p className="hero-description">Real people. Small acts. Lasting impact. A home for stories of love, respect, gratitude, and kindness that connect us.</p>
           <div className="flex flex-wrap gap-3 mt-8">
             <Link href="/stories" className="primary-link">Find a little inspiration <span aria-hidden="true">↗</span></Link>
             <Link href="/submit" className="secondary-link">Share your story <span aria-hidden="true">→</span></Link>
@@ -34,7 +34,7 @@ export default async function HomePage() {
           <div className="art-orbit orbit-one" /><div className="art-orbit orbit-two" />
           <span className="art-spark spark-one">✳</span><span className="art-spark spark-two">✧</span>
           <div className="keepsake keepsake-back"><span>THE EVERYDAY MAGIC OF</span><strong>being there.</strong><div className="art-flower">✳</div></div>
-          <div className="keepsake keepsake-front"><span>A NOTE TO REMEMBER</span><div className="drawn-heart">♡</div><strong>There is good<br />in the everyday.</strong><p>Sometimes, all it takes<br />is a story to see it.</p><div className="note-rule" /><small>HEART WITNESS</small></div>
+          <div className="keepsake keepsake-front"><span>A NOTE TO REMEMBER</span><div className="drawn-heart">♡</div><strong>Sometimes, all it takes<br />is a story to see it</strong><div className="note-rule" /><small>HEART WITNESS</small></div>
           <div className="art-label">Little stories. Big feelings.</div>
         </div>
       </section>
@@ -83,7 +83,7 @@ export default async function HomePage() {
       <section className="bg-terracotta-50 border-t border-terracotta-100 py-14 px-4">
         <div className="max-w-xl mx-auto text-center">
           <h3 className="text-xl font-bold text-ink mb-3">
-            The ordinary moments are often the extraordinary ones.
+            Ordinary moments can be extraordinary.
           </h3>
           <p className="text-muted mb-6">
             Your story doesn&apos;t need to be perfect — just real.
@@ -92,7 +92,7 @@ export default async function HomePage() {
             href="/submit"
             className="bg-terracotta-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-terracotta-700 transition-colors"
           >
-            Share my story →
+            Share your story →
           </Link>
         </div>
       </section>

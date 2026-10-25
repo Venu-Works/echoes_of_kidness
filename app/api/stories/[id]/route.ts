@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Story } from "@/models/Story";
 import { getModerationQueue } from "@/lib/queue/queue";
+import { moderationJobId } from "@/lib/queue/jobId";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function GET(
   _req: NextRequest,
@@ -55,15 +57,15 @@ export async function PATCH(
   const parsed = EditStorySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.errors[0].message },
+      { error: parsed.error.issues[0].message },
       { status: 400 }
     );
   }
 
   const wordCount = countWords(parsed.data.body);
-  if (wordCount > 500) {
+  if (wordCount < 50 || wordCount > 500) {
     return NextResponse.json(
-      { error: "Story must be 500 words or fewer" },
+      { error: "Story must contain between 50 and 500 words" },
       { status: 400 }
     );
   }
@@ -81,12 +83,22 @@ export async function PATCH(
 
   const displayName = parsed.data.post_as_anonymous ? "Anonymous" : parsed.data.display_name;
 
+  if (process.env.NODE_ENV === "production") {
+    try {
+      const limit = await checkRateLimit(`user:${userId}`);
+      if (!limit.allowed) return NextResponse.json({ error: "Please wait before resubmitting." }, { status: 429, headers: { "Retry-After": String(limit.resetIn) } });
+    } catch {
+      return NextResponse.json({ error: "Submissions are temporarily unavailable." }, { status: 503 });
+    }
+  }
+
   story.title = parsed.data.title;
   story.body = parsed.data.body;
   story.theme = parsed.data.theme;
   story.display_name = displayName;
   story.word_count = wordCount;
   story.status = "pending";
+  story.submitted_at = new Date();
   story.published_at = null;
   await story.save();
 
@@ -97,7 +109,8 @@ export async function PATCH(
       storyBody: story.body,
       storyThemes: story.theme,
       userEmail: session.user?.email ?? undefined,
-    });
+      submittedAt: story.submitted_at.toISOString(),
+    }, { jobId: moderationJobId(String(story._id), story.body, story.title, story.theme, story.submitted_at.toISOString()) });
   } catch (err) {
     console.error("[Stories API] Failed to enqueue moderation job:", err);
   }

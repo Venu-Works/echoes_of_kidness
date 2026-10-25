@@ -9,7 +9,7 @@ import { Story } from "@/models/Story";
 import { ModerationLog } from "@/models/ModerationLog";
 import { AdminActions } from "./AdminActions";
 
-export const metadata: Metadata = { title: "Admin — Human Review" };
+export const metadata: Metadata = { title: "Admin — Story review" };
 
 function getAdminEmails(): string[] {
   return (process.env.ADMIN_EMAILS ?? "")
@@ -47,7 +47,7 @@ export default async function AdminPage() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-ink mb-1">
-          Human Review Queue
+          Story review queue
         </h1>
         <p className="text-muted">
           {stories.length} {stories.length === 1 ? "story" : "stories"} awaiting review
@@ -84,7 +84,7 @@ export default async function AdminPage() {
                 {log && (
                   <div className="bg-purple-50 rounded-lg p-4 mb-4 text-xs space-y-2">
                     <p className="font-semibold text-purple-800 mb-2">
-                      AI Moderation Report
+                      AI moderation report
                     </p>
                     <div className="grid grid-cols-3 gap-3">
                       <div>

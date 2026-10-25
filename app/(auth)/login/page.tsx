@@ -63,7 +63,7 @@ function LoginForm() {
     });
 
     if (result?.error) {
-      setError("Account created! Please sign in.");
+      setError("Your account has been created. Please sign in.");
       setTab("signin");
     } else {
       router.push(callbackUrl);
@@ -94,7 +94,7 @@ function LoginForm() {
                 : "text-muted hover:text-ink"
             }`}
           >
-            Sign In
+            Sign in
           </button>
           <button
             onClick={() => { setTab("register"); setError(""); }}
@@ -104,7 +104,7 @@ function LoginForm() {
                 : "text-muted hover:text-ink"
             }`}
           >
-            Create Account
+            Create account
           </button>
         </div>
 
@@ -148,14 +148,14 @@ function LoginForm() {
               disabled={loading}
               className="w-full bg-terracotta-600 text-white py-3 rounded-lg font-semibold hover:bg-terracotta-700 disabled:opacity-50 transition-colors"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
         ) : (
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-ink mb-1">
-                Your Name
+                Your name
               </label>
               <input
                 type="text"
@@ -189,7 +189,7 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full border border-sand rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:border-transparent"
-                placeholder="Minimum 8 characters"
+                placeholder="At least 8 characters"
                 required
                 minLength={8}
               />
@@ -206,7 +206,7 @@ function LoginForm() {
               disabled={loading}
               className="w-full bg-terracotta-600 text-white py-3 rounded-lg font-semibold hover:bg-terracotta-700 disabled:opacity-50 transition-colors"
             >
-              {loading ? "Creating account..." : "Create Account"}
+              {loading ? "Creating account…" : "Create account"}
             </button>
           </form>
         )}

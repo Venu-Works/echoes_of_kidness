@@ -28,7 +28,7 @@ export function RegenerateImageButton({
       <span className="text-muted-light">Admin:</span>
       {state === "queued" ? (
         <>
-          <span className="text-amber-600">🎨 Image is being generated…</span>
+          <span className="text-amber-600">🎨 Preparing the image…</span>
           <button
             onClick={() => router.refresh()}
             className="text-muted underline hover:text-ink"
@@ -42,14 +42,14 @@ export function RegenerateImageButton({
           disabled={state === "loading"}
           className="px-3 py-1 border border-sand rounded-lg text-ink hover:bg-cream disabled:opacity-50 transition-colors"
         >
-          {state === "loading" ? "Queuing..." : "🎨 Regenerate image"}
+          {state === "loading" ? "Queuing…" : "🎨 Regenerate image"}
         </button>
       )}
       {imageStatus === "failed" && state === "idle" && (
-        <span className="text-red-600">Last generation failed</span>
+        <span className="text-red-600">The last image generation attempt failed.</span>
       )}
       {state === "error" && (
-        <span className="text-red-600">Could not queue — try again</span>
+        <span className="text-red-600">Could not queue the image. Please try again.</span>
       )}
     </div>
   );

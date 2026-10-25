@@ -12,7 +12,7 @@ import type { FlattenMaps, Types } from "mongoose";
 type LeanStory = FlattenMaps<IStoryDoc> & { _id: Types.ObjectId };
 import { EditForm } from "@/components/EditForm";
 
-export const metadata: Metadata = { title: "Edit Story" };
+export const metadata: Metadata = { title: "Edit story" };
 
 export default async function EditStoryPage({
   params,
@@ -50,9 +50,9 @@ export default async function EditStoryPage({
       </Link>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-ink mb-2">Edit & Resubmit</h1>
+        <h1 className="text-3xl font-bold text-ink mb-2">Edit and resubmit</h1>
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
-          This story was not published. Edit it below and resubmit for review.
+          This story was not published. You can edit it below and resubmit it for review.
         </div>
       </div>
 

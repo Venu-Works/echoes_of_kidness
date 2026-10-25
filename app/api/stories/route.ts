@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Story } from "@/models/Story";
 import { getModerationQueue } from "@/lib/queue/queue";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { moderationJobId } from "@/lib/queue/jobId";
 
 const SubmitStorySchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(200),
@@ -69,21 +71,33 @@ export async function POST(req: NextRequest) {
   const parsed = SubmitStorySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.errors[0].message },
+      { error: parsed.error.issues[0].message },
       { status: 400 }
     );
   }
 
   const wordCount = countWords(parsed.data.body);
-  if (wordCount > 500) {
+  if (wordCount < 50 || wordCount > 500) {
     return NextResponse.json(
-      { error: "Story must be 500 words or fewer" },
+      { error: "Story must contain between 50 and 500 words" },
       { status: 400 }
     );
   }
 
-  // Rate limiting disabled in development
-  // TODO: re-enable for production by restoring the checkRateLimit block
+  if (process.env.NODE_ENV === "production") {
+    // Vercel supplies this trusted header. Other hosts must sanitize it at their proxy.
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim();
+    const key = userId ? `user:${userId}` : ip ? `ip:${ip}` : "unknown";
+    try {
+      const limit = await checkRateLimit(key);
+      if (!limit.allowed) return NextResponse.json(
+        { error: "Please wait before submitting another story." },
+        { status: 429, headers: { "Retry-After": String(limit.resetIn) } }
+      );
+    } catch {
+      return NextResponse.json({ error: "Submissions are temporarily unavailable. Please try again shortly." }, { status: 503 });
+    }
+  }
 
   await connectDB();
 
@@ -109,7 +123,8 @@ export async function POST(req: NextRequest) {
       storyBody: story.body,
       storyThemes: story.theme,
       userEmail: session?.user?.email ?? undefined,
-    });
+      submittedAt: story.submitted_at.toISOString(),
+    }, { jobId: moderationJobId(String(story._id), story.body, story.title, story.theme, story.submitted_at.toISOString()) });
   } catch (err) {
     console.error("[Stories API] Failed to enqueue moderation job:", err);
     // Story is saved as "pending" — can be processed manually if queue fails
