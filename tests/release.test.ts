@@ -29,6 +29,11 @@ test("production workflow only starts on release tag pushes", () => {
   assert.ok(build >= 0 && build < worker && worker < promote);
   assert.ok(steps[build].run.includes("--prod --skip-domain"));
   assert.ok(steps[promote].run.includes('vercel promote "$DEPLOYMENT_URL"'));
+  const inspect = steps.findIndex((step: { name?: string }) => step.name === "Verify candidate access in the production team");
+  assert.ok(build < inspect && inspect < worker);
+  for (const index of [build, inspect, promote]) {
+    assert.ok(steps[index].run.includes('--scope="$VERCEL_ORG_ID"'), "Vercel commands must explicitly select the production team");
+  }
   assert.ok(!steps.some((step: { run?: string }) => /^\s*vercel (pull|build)/m.test(step.run ?? "")));
 });
 test("host configs disable direct push deployments", () => {

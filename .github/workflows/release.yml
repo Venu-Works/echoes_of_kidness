@@ -54,9 +54,13 @@ jobs:
           set -euo pipefail
           # Secret variables cannot be read back by vercel pull. Build on Vercel
           # so its build process can access them without exporting them to CI.
-          url=$(vercel deploy --yes --prod --skip-domain --token="$VERCEL_TOKEN")
+          url=$(vercel deploy --yes --prod --skip-domain --scope="$VERCEL_ORG_ID" --token="$VERCEL_TOKEN")
           [[ "$url" =~ ^https://[a-zA-Z0-9.-]+\.vercel\.app$ ]] || { echo "Vercel returned an unexpected deployment URL"; exit 1; }
           printf 'url=%s\n' "$url" >> "$GITHUB_OUTPUT"
+      - name: Verify candidate access in the production team
+        env:
+          DEPLOYMENT_URL: ${{ steps.stage.outputs.url }}
+        run: vercel inspect "$DEPLOYMENT_URL" --scope="$VERCEL_ORG_ID" --token="$VERCEL_TOKEN"
       - name: Deploy tagged worker and wait until live
         run: node scripts/deploy-render-cli.mjs
       - name: Promote tagged web application
@@ -65,7 +69,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          vercel promote "$DEPLOYMENT_URL" --yes --token="$VERCEL_TOKEN"
+          vercel promote "$DEPLOYMENT_URL" --yes --scope="$VERCEL_ORG_ID" --token="$VERCEL_TOKEN"
           echo "### Released $GITHUB_REF_NAME" >> "$GITHUB_STEP_SUMMARY"
           echo "Commit: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
           echo "Website: $DEPLOYMENT_URL" >> "$GITHUB_STEP_SUMMARY"
