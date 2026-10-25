@@ -47,17 +47,25 @@ jobs:
       - run: npm audit --audit-level=high
       - name: Install pinned Vercel CLI
         run: npm install --global vercel@65.2.0
-      - name: Fetch production build settings
-        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-      - name: Build tagged web application
-        run: vercel build --prod --token="$VERCEL_TOKEN"
-      - name: Deploy tagged worker and wait until live
-        run: node scripts/deploy-render-cli.mjs
-      - name: Deploy tagged web application
+      - name: Build tagged web application on Vercel without promoting
+        id: stage
         shell: bash
         run: |
           set -euo pipefail
-          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          # Secret variables cannot be read back by vercel pull. Build on Vercel
+          # so its build process can access them without exporting them to CI.
+          url=$(vercel deploy --yes --prod --skip-domain --token="$VERCEL_TOKEN")
+          [[ "$url" =~ ^https://[a-zA-Z0-9.-]+\.vercel\.app$ ]] || { echo "Vercel returned an unexpected deployment URL"; exit 1; }
+          printf 'url=%s\n' "$url" >> "$GITHUB_OUTPUT"
+      - name: Deploy tagged worker and wait until live
+        run: node scripts/deploy-render-cli.mjs
+      - name: Promote tagged web application
+        env:
+          DEPLOYMENT_URL: ${{ steps.stage.outputs.url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          vercel promote "$DEPLOYMENT_URL" --yes --token="$VERCEL_TOKEN"
           echo "### Released $GITHUB_REF_NAME" >> "$GITHUB_STEP_SUMMARY"
           echo "Commit: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
-          echo "Website: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "Website: $DEPLOYMENT_URL" >> "$GITHUB_STEP_SUMMARY"

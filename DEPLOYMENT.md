@@ -101,7 +101,7 @@ Ordinary commits and branch pushes run validation only. `.github/workflows/relea
    | `RENDER_API_KEY` | Render API key authorized to deploy the worker |
    | `RENDER_SERVICE_ID` | The worker service ID (`srv-...`) |
 
-5. Configure application secrets in Vercel/Render as listed above. The workflow fetches Vercel production build settings with `vercel pull`; database and AI keys do not need to be duplicated as GitHub secrets.
+5. Configure application secrets in Vercel/Render as listed above. The workflow builds on Vercel so its build process can access Secret environment variables without exporting them to GitHub. Do not use `vercel pull` plus `vercel build` for this release: non-readable secrets can be exported as placeholders. Database and AI keys do not need to be duplicated as GitHub secrets.
 
 Do not create a release tag until the accounts, runtime variables, worker service, and five workflow secrets are ready. Dashboard deployment buttons, CLI tokens, and administrators can still deploy manually; limiting those permissions is necessary if tag-only deployment must be enforced against other account holders.
 
@@ -116,7 +116,7 @@ git push origin v1.0.0
 
 Use a fresh version for each release. Creating a local tag alone does not deploy; pushing it starts **Release production** in GitHub Actions. Never move an already released tag to a different commit.
 
-The workflow validates the tag and credentials, runs lint/tests/audit, builds the tagged web app, then deploys that exact commit to Render and verifies it is live before deploying the Vercel prebuilt output. Releases are serialized. If the worker fails or returns a different commit, the web deployment does not start. A later web failure can leave the worker upgraded while the web remains on its previous version: releases are not atomic across providers, so keep queue/database changes backward compatible and inspect both dashboards after failures. Retrying a run can redeploy the same commit.
+The workflow validates the tag and credentials, runs lint/tests/audit, and builds the tagged web app remotely with `vercel deploy --prod --skip-domain`. This creates a production-environment candidate without assigning the production domains. It then deploys that exact commit to Render and verifies it is live before promoting the Vercel candidate with `vercel promote`. Releases are serialized. If the worker fails or returns a different commit, production domain promotion does not start. An unpromoted candidate remains available at its unique deployment URL subject to project access controls. A later promotion failure can leave the worker upgraded while the web domain remains on its previous version: releases are not atomic across providers, so keep queue/database changes backward compatible and inspect both dashboards after failures. Retrying a run can redeploy the same commit. A fixed workflow must be committed and included in a fresh release tag; rerunning an old tag still uses its original workflow.
 
 No release tag is created or pushed automatically. Host services and GitHub secrets are not provisioned by this workflow.
 

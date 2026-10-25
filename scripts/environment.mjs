@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 export function validateEnvironment(env, target, production) {
   const errors = [];
   const required = target === "worker"
@@ -26,11 +28,15 @@ export function validateEnvironment(env, target, production) {
   }
   if (target === "web" && env.SITE_URL && env.NEXTAUTH_URL && env.SITE_URL.replace(/\/$/, "") !== env.NEXTAUTH_URL.replace(/\/$/, "")) errors.push("SITE_URL and NEXTAUTH_URL must use the same origin");
   if (target === "web" && production && env.NEXTAUTH_SECRET && (env.NEXTAUTH_SECRET.length < 32 || /^(change|replace|your-|example)/i.test(env.NEXTAUTH_SECRET))) errors.push("NEXTAUTH_SECRET must be a generated secret of at least 32 characters");
-  for (const [key, protocols] of [["MONGODB_URI", ["mongodb:", "mongodb+srv:"]], ["REDIS_URL", ["redis:", "rediss:"]]]) {
-    if (env[key]) {
-      try { if (!protocols.includes(new URL(env[key]).protocol)) throw new Error(); }
-      catch { errors.push(`${key} has an invalid connection URL`); }
-    }
+  if (env.MONGODB_URI) {
+    // WHATWG URL rejects valid multi-host MongoDB replica-set addresses.
+    // Construction validates syntax without opening a database connection.
+    try { new mongoose.mongo.MongoClient(env.MONGODB_URI); }
+    catch { errors.push("MONGODB_URI has an invalid connection URL"); }
+  }
+  if (env.REDIS_URL) {
+    try { if (!["redis:", "rediss:"].includes(new URL(env.REDIS_URL).protocol)) throw new Error(); }
+    catch { errors.push("REDIS_URL has an invalid connection URL"); }
   }
   if (target === "worker" && env.EMAIL_ENABLED !== "false" && env.EMAIL_FROM && !/^[^<>]*<?[^<>\s@]+@[^<>\s@]+\.[^<>\s@]+>?$/.test(env.EMAIL_FROM)) errors.push("EMAIL_FROM must contain a sender email address");
   return errors;

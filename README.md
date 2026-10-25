@@ -200,7 +200,7 @@ API routes cover story listing/submission, author edits, reads, reactions, regis
 
 The prepared hosting setup uses **Vercel for the web app**, **Render for the worker**, and managed MongoDB/Redis. Both services use the same production data and job queues. A custom domain such as `heart-witness.com` can be connected after the initial host setup; `SITE_URL` and `NEXTAUTH_URL` must match the canonical web origin.
 
-**Production releases are triggered by version tags, not ordinary branch pushes.** The release workflow accepts stable tags such as `v1.0.0` pointing to a commit on `main`. It runs validation and a production build, deploys the exact tagged worker commit, waits for it to become live, and then deploys the web app.
+**Production releases are triggered by version tags, not ordinary branch pushes.** The release workflow accepts stable tags such as `v1.0.0` pointing to a commit on `main`. It runs validation, builds a web candidate on Vercel without assigning production domains, deploys the exact tagged worker commit, waits for it to become live, and then promotes the web candidate. Building on Vercel keeps non-readable production secrets available to the build without exporting their values to GitHub.
 
 After the workflow is committed and the hosting accounts, application settings, and GitHub production secrets are configured, the project owner creates the release:
 

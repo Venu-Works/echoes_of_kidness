@@ -23,7 +23,13 @@ test("production workflow only starts on release tag pushes", () => {
   assert.equal(workflow.jobs.release.environment, "production");
   const steps = workflow.jobs.release.steps;
   assert.ok(steps.find((step: { run?: string }) => step.run?.includes("merge-base --is-ancestor")));
-  assert.ok(steps.findIndex((step: { name?: string }) => step.name === "Deploy tagged worker and wait until live") < steps.findIndex((step: { name?: string }) => step.name === "Deploy tagged web application"));
+  const build = steps.findIndex((step: { id?: string }) => step.id === "stage");
+  const worker = steps.findIndex((step: { name?: string }) => step.name === "Deploy tagged worker and wait until live");
+  const promote = steps.findIndex((step: { name?: string }) => step.name === "Promote tagged web application");
+  assert.ok(build >= 0 && build < worker && worker < promote);
+  assert.ok(steps[build].run.includes("--prod --skip-domain"));
+  assert.ok(steps[promote].run.includes('vercel promote "$DEPLOYMENT_URL"'));
+  assert.ok(!steps.some((step: { run?: string }) => /^\s*vercel (pull|build)/m.test(step.run ?? "")));
 });
 test("host configs disable direct push deployments", () => {
   assert.equal(JSON.parse(readFileSync("vercel.json", "utf8")).git.deploymentEnabled, false);

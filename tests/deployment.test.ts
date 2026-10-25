@@ -32,6 +32,18 @@ test("invalid configuration messages never include credential values", () => {
   assert.ok(errors.some((error) => error.includes("MONGODB_URI")));
   assert.ok(errors.every((error) => !error.includes(secret)));
 });
+
+test("MongoDB replica-set and SRV connection strings pass syntax validation without connecting", () => {
+  for (const uri of [
+    "mongodb://user:password@db1.example.com:27017,db2.example.com:27017/stories?replicaSet=rs0&authSource=admin",
+    "mongodb+srv://user:password@cluster.example.com/stories?retryWrites=true&w=majority",
+  ]) assert.deepEqual(validateEnvironment({ ...web, MONGODB_URI: uri }, "web", true), []);
+});
+
+test("masked or malformed service connection values fail validation", () => {
+  const errors = validateEnvironment({ ...web, MONGODB_URI: "[SENSITIVE]", REDIS_URL: "[SENSITIVE]", NEXTAUTH_SECRET: "[SENSITIVE]" }, "web", true);
+  for (const key of ["MONGODB_URI", "REDIS_URL", "NEXTAUTH_SECRET"]) assert.ok(errors.some((error) => error.includes(key)));
+});
 test("production rejects a missing or short auth secret", () => {
   for (const secret of ["", "short", "replace-this-with-a-longer-example-secret"]) {
     assert.ok(validateEnvironment({ ...web, NEXTAUTH_SECRET: secret }, "web", true).some((error) => error.includes("NEXTAUTH_SECRET")));
