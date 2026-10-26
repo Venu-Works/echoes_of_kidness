@@ -2,11 +2,12 @@
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
-import { Worker, UnrecoverableError } from "bullmq";
-import IORedis from "ioredis";
 import mongoose from "mongoose";
 import type { ModerationJobData, IllustrationJobData } from "./queue";
 import { enqueueIllustration, closeQueues } from "./queue";
+import { PermanentJobError } from "./job";
+import { describeQueueBackend, startWorker } from "./runner";
+import { connectDB } from "@/lib/mongodb";
 import { describeScene, renderImage } from "@/lib/ai/illustrate";
 import { uploadStoryImage, ensureConfigured as ensureCloudinaryConfigured } from "@/lib/cloudinary";
 import { runSafetyAgent } from "@/lib/agents/safetyAgent";
@@ -18,8 +19,6 @@ import { ModerationLog } from "@/models/ModerationLog";
 import { sendApprovalEmail, sendRejectionEmail } from "@/lib/email";
 import { ThemeTag } from "@/types";
 
-const workerConnections: IORedis[] = [];
-
 function concurrency(name: string, fallback: number): number {
   const value = Number(process.env[name] ?? fallback);
   if (!Number.isInteger(value) || value < 1 || value > 20) throw new Error(`${name} must be an integer from 1 to 20`);
@@ -28,22 +27,13 @@ function concurrency(name: string, fallback: number): number {
 
 async function ensureDBConnected() {
   if (mongoose.connection.readyState !== 1) {
-    await mongoose.connect(process.env.MONGODB_URI!);
+    await connectDB();
   }
 }
 
-function createRedisConnection() {
-  const url = process.env.REDIS_URL!;
-  const connection = new IORedis(url, {
-    maxRetriesPerRequest: null,
-    tls: url.startsWith("rediss://") ? {} : undefined,
-  });
-  connection.on("error", () => console.error("[Worker] Redis connection unavailable"));
-  workerConnections.push(connection);
-  return connection;
-}
+console.log(`[Worker] ${describeQueueBackend()}`);
 
-const worker = new Worker<ModerationJobData>(
+const worker = startWorker<ModerationJobData>(
   "moderation",
   async (job) => {
     const { storyId, storyTitle, storyBody, storyThemes, userEmail, submittedAt } = job.data;
@@ -85,7 +75,8 @@ const worker = new Worker<ModerationJobData>(
         await Story.findByIdAndUpdate(storyId, { image_status: "pending" });
         await enqueueIllustration(storyId);
       } catch (err) {
-        // Never let an illustration problem affect moderation
+        // Never let an illustration problem affect moderation. The story stays
+        // "pending", so sweepOwedIllustrations() will queue it later.
         console.error(`[Worker] Failed to queue illustration for ${storyId}:`, err);
       }
     }
@@ -98,6 +89,7 @@ const worker = new Worker<ModerationJobData>(
         relevance_result: relevance,
         quality_result: quality,
         final_verdict: verdict.status,
+        verdict_reason: verdict.reason,
         processing_time_ms: processingMs,
         reviewed_at: new Date(),
       },
@@ -115,22 +107,10 @@ const worker = new Worker<ModerationJobData>(
 
     return verdict;
   },
-  { connection: createRedisConnection(), concurrency: concurrency("MODERATION_CONCURRENCY", 3) }
+  { concurrency: concurrency("MODERATION_CONCURRENCY", 3), label: "Worker" }
 );
 
-worker.on("completed", (job) => {
-  console.log(`[Worker] Job ${job.id} completed`);
-});
-
-worker.on("failed", (job, err) => {
-  console.error(`[Worker] Job ${job?.id} failed:`, err.message);
-});
-
-worker.on("error", (err) => {
-  console.error("[Worker] Worker error:", err);
-});
-
-const illustrationWorker = new Worker<IllustrationJobData>(
+const illustrationWorker = startWorker<IllustrationJobData>(
   "illustration",
   async (job) => {
     const { storyId } = job.data;
@@ -148,7 +128,7 @@ const illustrationWorker = new Worker<IllustrationJobData>(
       ensureCloudinaryConfigured();
     } catch (err) {
       await Story.findByIdAndUpdate(storyId, { image_status: "failed" });
-      throw new UnrecoverableError((err as Error).message);
+      throw new PermanentJobError((err as Error).message);
     }
 
     const start = Date.now();
@@ -165,35 +145,49 @@ const illustrationWorker = new Worker<IllustrationJobData>(
       console.log(`[Illustrator] ${storyId} → ready in ${Date.now() - start}ms`);
     } catch (err) {
       // Only mark failed after the last retry; keep any previous image
-      if (job.attemptsMade + 1 >= (job.opts.attempts ?? 1)) {
+      if (job.isLastAttempt) {
         await Story.findByIdAndUpdate(storyId, { image_status: "failed" });
       }
       throw err;
     }
   },
-  { connection: createRedisConnection(), concurrency: concurrency("ILLUSTRATION_CONCURRENCY", 2) }
+  { concurrency: concurrency("ILLUSTRATION_CONCURRENCY", 2), label: "Illustrator" }
 );
 
-illustrationWorker.on("failed", (job, err) => {
-  console.error(`[Illustrator] Job ${job?.id} failed:`, err.message);
-});
-
-illustrationWorker.on("error", (err) => {
-  console.error("[Illustrator] Worker error:", err);
-});
-
 console.log("[Worker] Heart Witness moderation worker started");
+
+// Approved stories whose image job couldn't be queued (e.g. Redis was down
+// when they were approved) stay image_status "pending". Queue them on start-up
+// and periodically. This is a MongoDB query, so it costs no Redis commands
+// unless something is owed, and the illustration jobId stops duplicates.
+const SWEEP_INTERVAL_MS = 10 * 60 * 1000;
+async function sweepOwedIllustrations() {
+  try {
+    await ensureDBConnected();
+    const owed = await Story.find({ status: "approved", image_status: "pending" })
+      .select("_id")
+      .limit(100)
+      .lean();
+    for (const story of owed) await enqueueIllustration(String(story._id));
+    if (owed.length) console.log(`[Illustrator] Queued ${owed.length} owed illustration(s)`);
+  } catch (err) {
+    console.error("[Illustrator] Sweep for owed illustrations failed:", (err as Error).message);
+  }
+}
+void sweepOwedIllustrations();
+const sweepTimer = setInterval(() => void sweepOwedIllustrations(), SWEEP_INTERVAL_MS);
 
 let shuttingDown = false;
 async function shutdown(signal: string) {
   if (shuttingDown) return;
   shuttingDown = true;
+  clearInterval(sweepTimer);
   console.log(`[Worker] ${signal}: finishing active jobs before shutdown`);
-  // A host may eventually force-kill a job; BullMQ will recover stalled jobs.
+  // A host may eventually force-kill a job; both queue backends recover
+  // abandoned jobs.
   try {
     await Promise.all([worker.close(), illustrationWorker.close()]);
     await closeQueues();
-    for (const connection of workerConnections) connection.disconnect();
     await mongoose.disconnect();
     process.exit(0);
   } catch {

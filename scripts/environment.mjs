@@ -3,8 +3,13 @@ import mongoose from "mongoose";
 export function validateEnvironment(env, target, production) {
   const errors = [];
   const required = target === "worker"
-    ? ["MONGODB_URI", "REDIS_URL", "SITE_URL", "GEMINI_API_KEY", "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"]
-    : ["MONGODB_URI", "REDIS_URL", "SITE_URL", "NEXTAUTH_URL", "NEXTAUTH_SECRET", "ADMIN_EMAILS"];
+    ? ["MONGODB_URI", "SITE_URL", "GEMINI_API_KEY", "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"]
+    : ["MONGODB_URI", "SITE_URL", "NEXTAUTH_URL", "NEXTAUTH_SECRET", "ADMIN_EMAILS"];
+  // Keep in step with lib/queue/config.ts
+  const backend = (env.QUEUE_BACKEND ?? "redis").trim().toLowerCase() || "redis";
+  if (!["redis", "mongo"].includes(backend)) errors.push("QUEUE_BACKEND must be redis or mongo");
+  if (backend === "redis") required.push("REDIS_URL");
+  if (env.MONGO_QUEUE_POLL_SECONDS && (!Number.isFinite(Number(env.MONGO_QUEUE_POLL_SECONDS)) || Number(env.MONGO_QUEUE_POLL_SECONDS) < 1 || Number(env.MONGO_QUEUE_POLL_SECONDS) > 60)) errors.push("MONGO_QUEUE_POLL_SECONDS must be a number from 1 to 60");
   const provider = env.AI_PROVIDER || "claude";
   if (target === "worker") {
     if (env.EMAIL_ENABLED !== undefined && !["true", "false"].includes(env.EMAIL_ENABLED)) errors.push("EMAIL_ENABLED must be true or false");
@@ -13,6 +18,10 @@ export function validateEnvironment(env, target, production) {
     if (provider === "claude") required.push("ANTHROPIC_API_KEY");
     for (const name of ["MODERATION_CONCURRENCY", "ILLUSTRATION_CONCURRENCY"]) {
       if (env[name] && (!Number.isInteger(Number(env[name])) || Number(env[name]) < 1 || Number(env[name]) > 20)) errors.push(`${name} must be an integer from 1 to 20`);
+    }
+    // Keep in step with lib/queue/polling.ts
+    for (const [name, min, max] of [["WORKER_IDLE_WAIT_SECONDS", 5, 600], ["WORKER_STALLED_CHECK_SECONDS", 30, 3600]]) {
+      if (env[name] && (!Number.isFinite(Number(env[name])) || Number(env[name]) < min || Number(env[name]) > max)) errors.push(`${name} must be a number from ${min} to ${max}`);
     }
   }
   for (const key of required) {

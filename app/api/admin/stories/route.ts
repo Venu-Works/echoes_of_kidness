@@ -1,26 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireStaff } from "@/lib/staff";
 import { connectDB } from "@/lib/mongodb";
 import { Story } from "@/models/Story";
 import { ModerationLog } from "@/models/ModerationLog";
 
-function getAdminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim())
-    .filter(Boolean);
-}
-
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-
-  if (
-    !session?.user?.email ||
-    !getAdminEmails().includes(session.user.email)
-  ) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const { error } = await requireStaff("moderate");
+  if (error) return error;
 
   await connectDB();
 

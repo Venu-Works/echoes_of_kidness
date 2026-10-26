@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 
 export function Navbar() {
   const { data: session, status } = useSession();
-  const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin;
+  const staffRole = (session?.user as { staffRole?: "admin" | "moderator" | null } | undefined)?.staffRole;
 
   return (
     <nav className="border-b bg-cream/95 backdrop-blur sticky top-0 z-10">
@@ -32,9 +32,14 @@ export function Navbar() {
               <Link href="/profile" className="text-ink hover:text-terracotta-600 transition-colors">
                 My stories
               </Link>
-              {isAdmin && (
+              {staffRole && (
                 <Link href="/admin" className="text-ink hover:text-terracotta-600 transition-colors">
                   Review queue
+                </Link>
+              )}
+              {staffRole === "admin" && (
+                <Link href="/admin/team" className="text-ink hover:text-terracotta-600 transition-colors">
+                  Team
                 </Link>
               )}
               <button

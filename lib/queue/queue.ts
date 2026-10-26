@@ -1,14 +1,14 @@
+// Public queue API used by the website, worker and scripts. Jobs go to
+// Redis/BullMQ or MongoDB depending on QUEUE_BACKEND (see config.ts).
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
+import { QUEUE_SETTINGS, QueueName, queueBackend } from "./config";
+import type { IllustrationJobData, ModerationJobData } from "./job";
+import { addMongoJob, getMongoJobState, mongoInFlightStoryIds, retryMongoJob } from "./mongoQueue";
 
-export interface ModerationJobData {
-  storyId: string;
-  storyTitle: string;
-  storyBody: string;
-  storyThemes: string[];
-  userEmail?: string;
-  submittedAt?: string;
-}
+export type { ModerationJobData, IllustrationJobData } from "./job";
+
+// ── Redis / BullMQ ────────────────────────────────────────────────────────
 
 const connections = new Set<IORedis>();
 
@@ -28,59 +28,64 @@ function createRedisConnection() {
   return connection;
 }
 
-// Lazy singleton — only instantiated when first used, not at module import time
-let _queue: Queue<ModerationJobData> | null = null;
+// Lazy singletons — only instantiated when first used, not at module import time
+const redisQueues: Partial<Record<QueueName, Queue>> = {};
 
-export function getModerationQueue(): Queue<ModerationJobData> {
-  if (!_queue) {
-    _queue = new Queue<ModerationJobData>("moderation", {
+function getRedisQueue(name: QueueName): Queue {
+  if (!redisQueues[name]) {
+    const settings = QUEUE_SETTINGS[name];
+    redisQueues[name] = new Queue(name, {
       connection: createRedisConnection(),
       defaultJobOptions: {
-        attempts: 3,
-        backoff: { type: "exponential", delay: 5000 },
-        removeOnComplete: { count: 1000 },
-        removeOnFail: { count: 500 },
+        attempts: settings.attempts,
+        backoff: { type: "exponential", delay: settings.backoffMs },
+        removeOnComplete: settings.keepCompleted ? { count: 1000 } : true,
+        removeOnFail: settings.keepFailed ? { count: 500 } : true,
       },
     });
   }
-  return _queue;
+  return redisQueues[name]!;
 }
 
-export interface IllustrationJobData {
-  storyId: string;
-}
+// ── Producer API ──────────────────────────────────────────────────────────
 
-let _illustrationQueue: Queue<IllustrationJobData> | null = null;
-
-export function getIllustrationQueue(): Queue<IllustrationJobData> {
-  if (!_illustrationQueue) {
-    _illustrationQueue = new Queue<IllustrationJobData>("illustration", {
-      connection: createRedisConnection(),
-      defaultJobOptions: {
-        attempts: 2,
-        backoff: { type: "exponential", delay: 10000 },
-        removeOnComplete: true,
-        removeOnFail: true,
-      },
-    });
-  }
-  return _illustrationQueue;
-}
-
-export async function closeQueues(): Promise<void> {
-  await Promise.all([_queue?.close(), _illustrationQueue?.close()]);
-  for (const connection of connections) connection.disconnect();
-  connections.clear();
-  _queue = null;
-  _illustrationQueue = null;
+export async function enqueueModeration(data: ModerationJobData, jobId: string): Promise<void> {
+  if (queueBackend() === "mongo") return addMongoJob("moderation", jobId, data);
+  await getRedisQueue("moderation").add("moderate-story", data, { jobId });
 }
 
 // Queues an illustration for a story. The jobId stops the same story being
 // queued twice while a job for it is still waiting or running.
 export async function enqueueIllustration(storyId: string): Promise<void> {
-  await getIllustrationQueue().add(
-    "illustrate-story",
-    { storyId },
-    { jobId: `illustrate-${storyId}` }
-  );
+  const data: IllustrationJobData = { storyId };
+  const jobId = `illustrate-${storyId}`;
+  if (queueBackend() === "mongo") return addMongoJob("illustration", jobId, data);
+  await getRedisQueue("illustration").add("illustrate-story", data, { jobId });
+}
+
+// ── Inspection (used by scripts/recover-moderation.ts) ────────────────────
+
+export async function moderationStoryIdsInFlight(): Promise<Set<string>> {
+  if (queueBackend() === "mongo") return mongoInFlightStoryIds("moderation");
+  const jobs = await getRedisQueue("moderation").getJobs(["wait", "active", "delayed", "paused", "prioritized"]);
+  return new Set(jobs.map((job) => (job.data as ModerationJobData).storyId));
+}
+
+// Returns the job's state, or null if no job with this ID exists
+export async function moderationJobState(jobId: string): Promise<string | null> {
+  if (queueBackend() === "mongo") return getMongoJobState("moderation", jobId);
+  const job = await getRedisQueue("moderation").getJob(jobId);
+  return job ? await job.getState() : null;
+}
+
+export async function retryFailedModerationJob(jobId: string): Promise<void> {
+  if (queueBackend() === "mongo") return retryMongoJob("moderation", jobId);
+  await (await getRedisQueue("moderation").getJob(jobId))?.retry();
+}
+
+export async function closeQueues(): Promise<void> {
+  await Promise.all(Object.values(redisQueues).map((queue) => queue?.close()));
+  for (const connection of connections) connection.disconnect();
+  connections.clear();
+  for (const name of Object.keys(redisQueues) as QueueName[]) delete redisQueues[name];
 }

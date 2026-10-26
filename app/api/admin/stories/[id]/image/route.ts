@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireStaff } from "@/lib/staff";
 import { connectDB } from "@/lib/mongodb";
 import { Story } from "@/models/Story";
 import { enqueueIllustration } from "@/lib/queue/queue";
-
-function getAdminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim())
-    .filter(Boolean);
-}
 
 // Regenerate the illustration for an approved story
 export async function POST(
@@ -18,14 +10,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-
-  if (
-    !session?.user?.email ||
-    !getAdminEmails().includes(session.user.email)
-  ) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const { error } = await requireStaff("moderate");
+  if (error) return error;
 
   await connectDB();
 
@@ -44,11 +30,11 @@ export async function POST(
   try {
     await enqueueIllustration(id);
   } catch (err) {
+    // Leave image_status "pending": the worker's sweep will queue it later
     console.error("[Admin API] Failed to queue illustration:", err);
-    await Story.findByIdAndUpdate(id, { image_status: "failed" });
     return NextResponse.json(
-      { error: "Could not queue image generation" },
-      { status: 500 }
+      { error: "The image queue is unavailable right now — the image will be generated automatically once it's back" },
+      { status: 503 }
     );
   }
 

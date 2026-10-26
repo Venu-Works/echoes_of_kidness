@@ -3,6 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "./mongodb";
 import { User } from "@/models/User";
+import { getStaffAccess, StaffRole } from "./staffRoles";
+
+const STAFF_ROLE_REFRESH_MS = 60 * 1000;
 
 export const authOptions: AuthOptions = {
   session: { strategy: "jwt" },
@@ -41,6 +44,18 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) token.sub = user.id;
+      // Staff role, used only to decide which links to show. It is refreshed
+      // every minute; every staff action re-checks the database (lib/staff.ts).
+      const checkedAt = (token.staffCheckedAt as number | undefined) ?? 0;
+      if (user || Date.now() - checkedAt > STAFF_ROLE_REFRESH_MS) {
+        try {
+          const access = await getStaffAccess(token.email);
+          token.staffRole = access?.role ?? null;
+          token.staffCheckedAt = Date.now();
+        } catch {
+          // Keep the previous value if the database is briefly unavailable
+        }
+      }
       return token;
     },
     async session({ session, token }) {
@@ -48,12 +63,8 @@ export const authOptions: AuthOptions = {
         (session.user as { id?: string }).id = token.sub;
       }
       if (session.user) {
-        const adminEmails = (process.env.ADMIN_EMAILS ?? "")
-          .split(",")
-          .map((e) => e.trim())
-          .filter(Boolean);
-        (session.user as { isAdmin?: boolean }).isAdmin =
-          !!token.email && adminEmails.includes(token.email);
+        (session.user as { staffRole?: StaffRole | null }).staffRole =
+          (token.staffRole as StaffRole | null | undefined) ?? null;
       }
       return session;
     },

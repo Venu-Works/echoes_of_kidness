@@ -10,7 +10,7 @@ export function RegenerateImageButton({
   storyId: string;
   imageStatus: string;
 }) {
-  const [state, setState] = useState<"idle" | "loading" | "queued" | "error">(
+  const [state, setState] = useState<"idle" | "loading" | "queued" | "delayed" | "error">(
     imageStatus === "pending" ? "queued" : "idle"
   );
   const router = useRouter();
@@ -20,7 +20,9 @@ export function RegenerateImageButton({
     const res = await fetch(`/api/admin/stories/${storyId}/image`, {
       method: "POST",
     });
-    setState(res.ok ? "queued" : "error");
+    // 503 = queue unavailable; the story is still owed an image and the
+    // worker will pick it up automatically
+    setState(res.ok ? "queued" : res.status === 503 ? "delayed" : "error");
   }
 
   return (
@@ -47,6 +49,11 @@ export function RegenerateImageButton({
       )}
       {imageStatus === "failed" && state === "idle" && (
         <span className="text-red-600">The last image generation attempt failed.</span>
+      )}
+      {state === "delayed" && (
+        <span className="text-amber-700">
+          The image queue is unavailable right now. The image will be generated automatically once it&apos;s back.
+        </span>
       )}
       {state === "error" && (
         <span className="text-red-600">Could not queue the image. Please try again.</span>

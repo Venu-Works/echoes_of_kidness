@@ -1,11 +1,5 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI!;
-
-if (!MONGODB_URI) {
-  throw new Error("MONGODB_URI environment variable is not defined");
-}
-
 declare global {
   // eslint-disable-next-line no-var
   var _mongooseCache: {
@@ -24,7 +18,11 @@ export async function connectDB(): Promise<typeof mongoose> {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
+    // Checked here rather than at import time, so modules that only
+    // sometimes touch the database can be imported (and tested) without it
+    const uri = process.env.MONGODB_URI;
+    if (!uri) throw new Error("MONGODB_URI environment variable is not defined");
+    cached.promise = mongoose.connect(uri, {
       bufferCommands: false,
     });
   }

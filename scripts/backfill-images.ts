@@ -6,7 +6,7 @@ dotenv.config({ path: ".env.local" });
 
 import mongoose from "mongoose";
 import { Story } from "@/models/Story";
-import { enqueueIllustration, getIllustrationQueue } from "@/lib/queue/queue";
+import { enqueueIllustration, closeQueues } from "@/lib/queue/queue";
 
 async function main() {
   const retryFailed = process.argv.includes("--retry-failed");
@@ -28,7 +28,7 @@ async function main() {
     console.log(`  • ${story.title}`);
   }
 
-  await getIllustrationQueue().close();
+  await closeQueues();
   await mongoose.disconnect();
 }
 

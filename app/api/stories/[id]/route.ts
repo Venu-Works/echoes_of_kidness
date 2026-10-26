@@ -4,7 +4,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Story } from "@/models/Story";
-import { getModerationQueue } from "@/lib/queue/queue";
+import { enqueueModeration } from "@/lib/queue/queue";
 import { moderationJobId } from "@/lib/queue/jobId";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -103,14 +103,14 @@ export async function PATCH(
   await story.save();
 
   try {
-    await getModerationQueue().add("moderate-story", {
+    await enqueueModeration({
       storyId: story._id.toString(),
       storyTitle: story.title,
       storyBody: story.body,
       storyThemes: story.theme,
       userEmail: session.user?.email ?? undefined,
       submittedAt: story.submitted_at.toISOString(),
-    }, { jobId: moderationJobId(String(story._id), story.body, story.title, story.theme, story.submitted_at.toISOString()) });
+    }, moderationJobId(String(story._id), story.body, story.title, story.theme, story.submitted_at.toISOString()));
   } catch (err) {
     console.error("[Stories API] Failed to enqueue moderation job:", err);
   }

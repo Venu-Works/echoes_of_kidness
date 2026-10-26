@@ -5,7 +5,7 @@
 - **Vercel:** Next.js pages, API routes, NextAuth, and social previews under one public domain.
 - **Render:** one continuous background worker running moderation and illustration consumers from the same commit.
 - **MongoDB Atlas:** application database.
-- **Managed Redis:** BullMQ queues and submission limits; accessible by both hosts.
+- **Managed Redis:** BullMQ queues and submission limits; accessible by both hosts. Optional: with `QUEUE_BACKEND=mongo`, queues and limits live in MongoDB instead and no Redis is needed (see [Queue backend](#queue-backend)).
 - **Cloudinary / Resend / AI providers:** existing image, email, and AI integrations.
 
 This preparation does not provision paid services, publish the repository, or change DNS. Start with a staging deployment and separate database/Redis instances. Never attach a preview worker to production queues.
@@ -25,11 +25,12 @@ Use `.env.example` as a list of names, not production values. Configure producti
 | Variable | Web | Worker | Notes |
 | --- | --- | --- | --- |
 | `MONGODB_URI` | Required | Required | Same production database; configure least-privilege access and network rules for both hosts |
-| `REDIS_URL` | Required | Required | Same production instance; use its external TLS URL where hosts are on different networks |
+| `QUEUE_BACKEND` | Optional | Optional | `redis` (default) or `mongo`. **Set the same value on web and worker** |
+| `REDIS_URL` | If `redis` | If `redis` | Same production instance; use its external TLS URL where hosts are on different networks. Not needed with `QUEUE_BACKEND=mongo` |
 | `SITE_URL` | Required | Required | Public HTTPS origin, such as `https://your-domain.com`; no path |
 | `NEXTAUTH_URL` | Required | — | Same origin as `SITE_URL` |
 | `NEXTAUTH_SECRET` | Required | — | Generate at least 32 random bytes and retain across web redeployments |
-| `ADMIN_EMAILS` | Required | — | Comma-separated existing administrator account email addresses |
+| `ADMIN_EMAILS` | Required | — | Comma-separated **owner** emails. Owners are always admins and can't be removed from the website. Add further admins and moderators from **Team** (`/admin/team`) instead of here |
 | `AI_PROVIDER` | — | Optional | `claude` (default) or `gemini` |
 | `ANTHROPIC_API_KEY` | — | If Claude | Text moderation/scene description |
 | `GEMINI_API_KEY` | — | Required | Illustration generation, plus text when Gemini is selected |
@@ -42,6 +43,23 @@ Use `.env.example` as a list of names, not production values. Configure producti
 | `EMAIL_FROM` | — | If email enabled | For example `Heart Witness <noreply@your-domain.com>`; verify the domain in Resend |
 | `MODERATION_CONCURRENCY` | — | Optional | Default 3; integer 1–20 |
 | `ILLUSTRATION_CONCURRENCY` | — | Optional | Default 2; integer 1–20 |
+| `WORKER_IDLE_WAIT_SECONDS` | — | Optional | Default 120; 5–600. How long an idle worker waits on Redis before checking again. New jobs still start immediately; higher values mean fewer Redis commands |
+| `WORKER_STALLED_CHECK_SECONDS` | — | Optional | Default 300; 30–3600. How often the worker looks for jobs abandoned by a crashed worker. Lower recovers faster but uses more Redis commands |
+
+| `MONGO_QUEUE_POLL_SECONDS` | — | Optional | Default 5; 1–60. With `QUEUE_BACKEND=mongo`, how often an idle worker checks MongoDB for new jobs |
+
+Redis usage: an idle worker process sends roughly 100,000 Redis commands a month with these defaults (it was about 2 million with BullMQ's own defaults). Run only one worker per Redis database, and use a separate Redis database for local development so testing doesn't use up production's allowance.
+
+### Queue backend
+
+`QUEUE_BACKEND` chooses where background jobs and submission rate limits are stored:
+
+- **`redis`** (default): BullMQ on Redis, as described above.
+- **`mongo`**: the `queue_jobs` and `rate_limits` collections in the app's MongoDB. No Redis service or `REDIS_URL` is needed, and there is no per-command quota. The worker checks for new jobs every `MONGO_QUEUE_POLL_SECONDS`, so a new story starts moderation within about 5 seconds instead of instantly.
+
+Both backends keep the same behaviour: duplicate jobs are ignored, failed attempts retry with the same backoff (moderation 3 attempts, illustration 2), and jobs abandoned by a crashed worker are picked up again (Mongo: after their 10-minute lock expires). Finished moderation jobs are kept for 7 days and final failures for 30 days, then removed automatically; illustration jobs are removed when they finish.
+
+To switch, set `QUEUE_BACKEND` on **both** the web host and the worker and redeploy both. Jobs already waiting in the old backend are not moved: let the queue drain first, or afterwards run `npm run queue:recover -- --apply` (moderation) and `npm run backfill-images -- --retry-failed` (images). Approved stories still owed an image are also re-queued automatically by the worker every 10 minutes.
 
 Generate the authentication secret on your own machine with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`, then save it directly in the web host's secret settings. Do not paste it into issues or logs.
 

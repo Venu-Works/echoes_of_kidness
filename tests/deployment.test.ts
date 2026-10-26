@@ -65,6 +65,30 @@ test("worker rejects unsupported providers and unsafe concurrency", () => {
     assert.ok(validateEnvironment({ ...worker, MODERATION_CONCURRENCY: value }, "worker", true).some((error) => error.includes("MODERATION_CONCURRENCY")));
   }
 });
+test("the Mongo queue backend needs no Redis, while the default still requires it", () => {
+  const { REDIS_URL: _unused, ...withoutRedis } = worker;
+  void _unused;
+  assert.ok(validateEnvironment(withoutRedis, "worker", true).some((error) => error.includes("REDIS_URL is required")));
+  assert.deepEqual(validateEnvironment({ ...withoutRedis, QUEUE_BACKEND: "mongo" }, "worker", true), []);
+  const { REDIS_URL: _unusedWeb, ...webWithoutRedis } = web;
+  void _unusedWeb;
+  assert.deepEqual(validateEnvironment({ ...webWithoutRedis, QUEUE_BACKEND: "mongo" }, "web", true), []);
+});
+test("unknown queue backends and unsafe Mongo poll intervals are rejected", () => {
+  assert.ok(validateEnvironment({ ...worker, QUEUE_BACKEND: "mongodb" }, "worker", true).some((error) => error.includes("QUEUE_BACKEND")));
+  for (const value of ["0", "61", "soon"]) {
+    assert.ok(validateEnvironment({ ...worker, QUEUE_BACKEND: "mongo", MONGO_QUEUE_POLL_SECONDS: value }, "worker", true).some((error) => error.includes("MONGO_QUEUE_POLL_SECONDS")));
+  }
+});
+test("worker rejects polling settings outside the supported range", () => {
+  assert.deepEqual(validateEnvironment({ ...worker, WORKER_IDLE_WAIT_SECONDS: "120", WORKER_STALLED_CHECK_SECONDS: "300" }, "worker", true), []);
+  for (const value of ["4", "601", "abc"]) {
+    assert.ok(validateEnvironment({ ...worker, WORKER_IDLE_WAIT_SECONDS: value }, "worker", true).some((error) => error.includes("WORKER_IDLE_WAIT_SECONDS")));
+  }
+  for (const value of ["10", "3601"]) {
+    assert.ok(validateEnvironment({ ...worker, WORKER_STALLED_CHECK_SECONDS: value }, "worker", true).some((error) => error.includes("WORKER_STALLED_CHECK_SECONDS")));
+  }
+});
 
 test("worker can start with email explicitly disabled and no Resend configuration", () => {
   assert.deepEqual(validateEnvironment({ ...worker, EMAIL_ENABLED: "false", RESEND_API_KEY: "", EMAIL_FROM: "" }, "worker", true), []);

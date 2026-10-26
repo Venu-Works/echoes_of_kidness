@@ -21,7 +21,8 @@ export interface RelevanceResult {
 
 export interface QualityResult {
   quality_pass: boolean;
-  word_count: number;
+  // Clear-cut spam/test/gibberish — the only quality failure that auto-rejects
+  obvious_junk: boolean;
   coherent: boolean;
   reason: string;
 }

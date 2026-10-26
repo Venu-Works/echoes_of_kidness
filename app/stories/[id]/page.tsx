@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { connectDB } from "@/lib/mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { canModerate, getStaffAccess } from "@/lib/staffRoles";
 import { Story, IStoryDoc } from "@/models/Story";
 import { StoryImage } from "@/components/StoryImage";
 import { RegenerateImageButton } from "./RegenerateImageButton";
@@ -85,7 +86,8 @@ export default async function StoryPage({
   if (!story) notFound();
 
   const session = await getServerSession(authOptions);
-  const isAdmin = !!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin;
+  // Moderators and admins see the Regenerate image control
+  const isAdmin = canModerate(await getStaffAccess(session?.user?.email));
 
   const reactorKey = await getReactorKey();
   const myReactions = reactorKey

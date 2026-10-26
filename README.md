@@ -13,7 +13,8 @@ The application combines a full-stack Next.js website with background processing
 - **Manage your stories:** signed-in authors can track review status and edit/resubmit rejected stories.
 - **Respond to stories:** react with gratitude, respect, love, or applause; story pages also track reads.
 - **Share with others:** use WhatsApp, Facebook, LinkedIn, X, native device sharing where supported, or Copy link. Published stories have their own social-preview metadata.
-- **Review submissions:** administrators can approve or reject stories that need human review and request new illustrations.
+- **Review submissions:** moderators and admins can approve or reject stories that need human review, overturn AI rejections, and request new illustrations.
+- **Manage the moderation team:** admins add, promote, and remove moderators and admins from the website.
 
 The interface uses warm paper tones, serif storytelling typography, and a heart-and-book brand mark. Approved stories can receive graphite-style AI illustrations.
 
@@ -59,7 +60,7 @@ Story status and illustration status are separate. A published story can be read
 | Authentication | NextAuth credentials provider, JWT sessions, bcrypt password hashing |
 | Database | MongoDB with Mongoose |
 | Validation | Zod |
-| Background jobs | BullMQ and Redis through ioredis |
+| Background jobs | BullMQ and Redis through ioredis, or MongoDB with `QUEUE_BACKEND=mongo` |
 | Text moderation and scene descriptions | Anthropic Claude or Google Gemini |
 | Illustration generation | Google Gemini |
 | Image hosting | Cloudinary |
@@ -73,7 +74,7 @@ Email/password login is implemented. Google, Facebook, and Instagram login are n
 ### Requirements
 
 - **Node.js 22.x** and npm; the expected version is recorded in `.nvmrc`.
-- A running MongoDB instance and Redis instance, local or hosted.
+- A running MongoDB instance, local or hosted, and a Redis instance unless you set `QUEUE_BACKEND=mongo` (see [Queue backend](DEPLOYMENT.md#queue-backend)).
 - API credentials for the services you want to exercise. Full moderation/illustration/email processing requires the worker's provider credentials.
 
 ### 1. Install dependencies
@@ -113,7 +114,7 @@ For the worker, also configure:
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`.
 - For email notifications, `RESEND_API_KEY` and `EMAIL_FROM`, using a sender domain verified in Resend. To defer email setup, set `EMAIL_ENABLED=false`; moderation and illustrations still run, and authors check status on the website.
 
-Optional settings include `GEMINI_IMAGE_MODEL`, `MODERATION_CONCURRENCY`, and `ILLUSTRATION_CONCURRENCY`. See the [full environment-variable reference](DEPLOYMENT.md#environment-variables) for details.
+Optional settings include `QUEUE_BACKEND` (`redis` or `mongo`; with `mongo`, `REDIS_URL` isn't needed), `GEMINI_IMAGE_MODEL`, `MODERATION_CONCURRENCY`, and `ILLUSTRATION_CONCURRENCY`. See the [full environment-variable reference](DEPLOYMENT.md#environment-variables) for details.
 
 `.env.local` is ignored by Git. Configure hosted secrets through the hosting dashboards rather than committing them.
 
@@ -133,7 +134,7 @@ npm run worker
 
 The web app and worker must use the same MongoDB and Redis instances. Without a worker, submissions can be saved and queued, but automated review and image generation will not proceed. Running the full pipeline makes real provider requests and may consume paid quotas.
 
-To access the review queue, register/sign in with an account whose email appears in `ADMIN_EMAILS`.
+To access the review queue, register/sign in with an account whose email appears in `ADMIN_EMAILS`. These owners can then add moderators and other admins from **Team** (`/admin/team`); access can be granted before the person registers and applies when they sign in with that email.
 
 ## Useful commands
 
@@ -191,7 +192,8 @@ tests/                       Configuration and release tests
 | `/submit` | Submit a story |
 | `/login` | Sign in or create an account |
 | `/profile` | View your submissions and their review status |
-| `/admin` | Administrator review queue |
+| `/admin` | Review queue (moderators and admins) |
+| `/admin/team` | Moderation team management (admins) |
 | `/api/health` | Application liveness check; does not test database or queue readiness |
 
 API routes cover story listing/submission, author edits, reads, reactions, registration, authentication, and administrator review/image generation. They are implemented under [`app/api`](app/api).
@@ -218,7 +220,7 @@ See **[DEPLOYMENT.md](DEPLOYMENT.md)** for account setup, environment variables,
 ## Current safeguards and next milestone
 
 - Stories are validated and moderated before publication.
-- Administrator routes check the signed-in user's configured admin email.
+- Staff routes check the signed-in user's role in the database on every request (owners from `ADMIN_EMAILS`, other admins and moderators from the `staff_members` collection), so removing someone takes effect immediately.
 - Production submissions/resubmissions are rate-limited through Redis. New submissions use an account-based limit for signed-in users or an IP-based limit for guests.
 - Moderation job IDs include the submission revision so recovery can deduplicate jobs.
 - Worker shutdown handlers let active jobs finish, and moderation updates avoid overwriting an administrator's decision made during processing.
